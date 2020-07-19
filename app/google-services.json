@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "702988889765",
+    "firebase_url": "https://fileboi-firebase.firebaseio.com",
+    "project_id": "fileboi-firebase",
+    "storage_bucket": "fileboi-firebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:702988889765:android:d899ec050b6f914a3ee74c",
+        "android_client_info": {
+          "package_name": "dev.sanskar.fileboi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "702988889765-865ui3nkdsuh1ua1840dthb7mljptb87.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanskar.fileboi",
+            "certificate_hash": "7be8db5c04efe5a80b444e79e769ec83de7eaf50"
+          }
+        },
+        {
+          "client_id": "702988889765-k5mcjt093ol0mc6gjq8c5m32ggmvbv8a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTM-IQtlisIPZvJXpGD4PWaHJyJf88ud4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "702988889765-k5mcjt093ol0mc6gjq8c5m32ggmvbv8a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
