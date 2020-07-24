@@ -1,6 +1,7 @@
 package dev.sanskar.fileboi.view_models;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -32,16 +33,13 @@ import okhttp3.Response;
 public class FilesViewModel extends ViewModel {
 
 
-    //this is the data that we will fetch asynchronously
-    private MutableLiveData<List<Files>> fileList;
+    // this is the data that we will fetch asynchronously and observe for change from activity/fragment
+    private MutableLiveData<List<Files>> fileList = new MutableLiveData<>();;
 
-    //we will call this method to get the data
+    // we will call this method to get the data
     public LiveData<List<Files>> getFiles() {
-        //if the list is null
-        if (fileList == null) {
-            fileList = new MutableLiveData<List<Files>>();
-            //we will load it asynchronously from server in this method
 
+            //we will load it asynchronously from server in this method
             FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
             if (mUser != null) {
                 mUser.getIdToken(true)
@@ -60,39 +58,14 @@ public class FilesViewModel extends ViewModel {
                             }
                         });
             }
-//            loadFileboiFiles();
-        }
 
-        //finally we will return the list
+        // returning the list. when above async task finishes, it will post value to this LiveData list and the observer (from activity/fragment will be notified
         return fileList;
     }
 
 
-    //This method is using Retrofit to get the JSON data from URL
+    //This method is using Okhttp to get the JSON data from our web service
     private void loadFiles(String token) {
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl(FileboiFileInterface.BASE_URL)
-//                .addConverterFactory(GsonConverterFactory.create())
-//                .build();
-//
-//        FileboiFileInterface api = retrofit.create(FileboiFileInterface.class);
-//        Call<List<Files>> call = api.getFileboiFiles();
-//
-//
-//        call.enqueue(new Callback<List<Files>>() {
-//            @Override
-//            public void onResponse(Call<List<Files>> call, Response<List<Files>> response) {
-//
-//                //finally we are setting the list to our MutableLiveData
-//                fileboiFileList.setValue(response.body());
-//            }
-//
-//            @Override
-//            public void onFailure(Call<List<Files>> call, Throwable t) {
-//
-//            }
-//        });
-
 
         // get entries
         Request getUrlRequest = new Request.Builder()
@@ -111,6 +84,7 @@ public class FilesViewModel extends ViewModel {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
 
+                // TODO : handle case when api returns non-200 status
                 String responseJsonString = response.body().string();
                 JSONArray getUrlResponseJson = null;
                 try {

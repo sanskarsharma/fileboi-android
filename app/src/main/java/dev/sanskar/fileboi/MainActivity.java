@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
 import android.content.Intent;
@@ -51,9 +52,9 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btnUploadFile ;
     ProgressBar progressBar;
 
+    SwipeRefreshLayout swipeRefreshLayout;
     FloatingActionButton fabBtnUploadFile;
     RecyclerView recyclerView;
     FilesAdapter filesAdapter;
@@ -71,25 +72,10 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
 
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-//        btnUploadFile = (Button) findViewById(R.id.buttonUploadFile);
-//        btnUploadFile.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                final Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
-//                galleryIntent.addCategory(Intent.CATEGORY_OPENABLE);
-//                galleryIntent.setType("*/*");
-//                if (mIsPermissionGranted) {
-//                    startActivityForResult(galleryIntent, REQUEST_CODE);
-//                } else {
-//                    Toast.makeText(MainActivity.this, "WRITE_EXTERNAL_STORAGE permission was not granted.", Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//        });
-
-        fabBtnUploadFile = (FloatingActionButton) findViewById(R.id.floatingActionButtonUploadFile);
+        fabBtnUploadFile = findViewById(R.id.floatingActionButtonUploadFile);
         fabBtnUploadFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -109,12 +95,26 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        FilesViewModel model = ViewModelProviders.of(this).get(FilesViewModel.class);
-        model.getFiles().observe(this, new Observer<List<Files>>() {
+        final FilesViewModel filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
+        filesViewModel.getFiles().observe(this, new Observer<List<Files>>() {
             @Override
             public void onChanged(@Nullable List<Files> filesList) {
                 filesAdapter = new FilesAdapter(MainActivity.this, filesList);
                 recyclerView.setAdapter(filesAdapter);
+                Toast.makeText(getApplicationContext(), "hello. i am loaded", Toast.LENGTH_SHORT).show();
+                if (swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }
+        });
+
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+
+                filesViewModel.getFiles();
+
             }
         });
 
@@ -138,21 +138,10 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 
-//            btnUploadFile.setVisibility(View.INVISIBLE);
             progressBar.setVisibility(View.VISIBLE);
-            recyclerView.setClickable(false);
-
-
-            Log.e(TAG, data.toString());
-            Log.e(TAG, data.getData().getPath());
-
 
             Uri selectedImageUri = data.getData();
-//            final String imagePath = getPath(selectedImageUri);
-//            final String imagePath = getRealPathFromDocumentUri(data.getData());
             final String imagePath = FileUploadUtils.getPath(this, selectedImageUri);
-
-            Log.e(TAG, imagePath);
 
             FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
             if (mUser != null) {
@@ -163,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
                                     String idToken = task.getResult().getToken();
                                     // Send token to your backend via HTTPS
                                     // ...
-                                    Log.d("TOKEN", idToken);
                                     new UploadTask().execute(imagePath, idToken);
 
                                 } else {
@@ -177,8 +165,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // R.menu.mymenu is a reference to an xml file named mymenu.xml which should be inside your res/menu directory.
-        // If you don't have res/menu, just create a directory named "menu" inside res
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
@@ -186,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.action_logout) {
             AuthUI.getInstance()
                     .signOut(getApplicationContext())
@@ -285,8 +270,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             progressBar.setVisibility(View.INVISIBLE);
-//            btnUploadFile.setVisibility(View.VISIBLE);
-            recyclerView.setClickable(true);
 
         }
     }
