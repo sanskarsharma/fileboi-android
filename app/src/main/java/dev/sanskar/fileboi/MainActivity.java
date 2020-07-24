@@ -34,20 +34,16 @@ import com.google.firebase.auth.GetTokenResult;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
-import dev.sanskar.fileboi.adapters.FileboiFilesAdapter;
-import dev.sanskar.fileboi.api.FileboiFile;
+import dev.sanskar.fileboi.adapters.FilesAdapter;
+import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
-import dev.sanskar.fileboi.view_models.FileboiFileViewModel;
-import okhttp3.ConnectionSpec;
+import dev.sanskar.fileboi.view_models.FilesViewModel;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -60,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     FloatingActionButton fabBtnUploadFile;
     RecyclerView recyclerView;
-    FileboiFilesAdapter fileboiFilesAdapter;
+    FilesAdapter filesAdapter;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE = 1111;
@@ -113,12 +109,12 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        FileboiFileViewModel model = ViewModelProviders.of(this).get(FileboiFileViewModel.class);
-        model.getFileboiFiles().observe(this, new Observer<List<FileboiFile>>() {
+        FilesViewModel model = ViewModelProviders.of(this).get(FilesViewModel.class);
+        model.getFiles().observe(this, new Observer<List<Files>>() {
             @Override
-            public void onChanged(@Nullable List<FileboiFile> fileboiFileList) {
-                fileboiFilesAdapter = new FileboiFilesAdapter(MainActivity.this, fileboiFileList);
-                recyclerView.setAdapter(fileboiFilesAdapter);
+            public void onChanged(@Nullable List<Files> filesList) {
+                filesAdapter = new FilesAdapter(MainActivity.this, filesList);
+                recyclerView.setAdapter(filesAdapter);
             }
         });
 

@@ -1,11 +1,11 @@
 package dev.sanskar.fileboi.api;
 
-public class FileboiFile {
+public class Files {
     private String id;
     private String name;
     private String createdAt;
 
-    public FileboiFile(String id, String name, String createdAt) {
+    public Files(String id, String name, String createdAt) {
         this.id = id;
         this.name = name;
         this.createdAt = createdAt;

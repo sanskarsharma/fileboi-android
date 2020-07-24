@@ -14,7 +14,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,9 +26,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 
-import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
-import dev.sanskar.fileboi.api.FileboiFile;
+import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import okhttp3.Call;
@@ -37,36 +35,36 @@ import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class FileboiFilesAdapter extends RecyclerView.Adapter<FileboiFilesAdapter.FileboiFileViewHolder> {
+public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHolder> {
 
     Context mCtx;
-    List<FileboiFile> fileboiFileList;
+    List<Files> filesList;
 
-    public FileboiFilesAdapter(Context mCtx, List<FileboiFile> fileboiFileList) {
+    public FilesAdapter(Context mCtx, List<Files> filesList) {
         this.mCtx = mCtx;
-        this.fileboiFileList = fileboiFileList;
+        this.filesList = filesList;
     }
 
     @NonNull
     @Override
-    public FileboiFileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public FilesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mCtx).inflate(R.layout.recyclerview_layout, parent, false);
-        return new FileboiFileViewHolder(view);
+        return new FilesViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FileboiFileViewHolder holder, int position) {
-        final FileboiFile fileboiFile = fileboiFileList.get(position);
+    public void onBindViewHolder(@NonNull FilesViewHolder holder, int position) {
+        final Files files = filesList.get(position);
 
 //        Glide.with(mCtx)
 //                .load(hero.getImageurl())
 //                .into(holder.imageView);
 
-        holder.textView.setText(fileboiFile.getName());
+        holder.textView.setText(files.getName());
         holder.textView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(view.getContext(), fileboiFile.getName(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(view.getContext(), files.getName(), Toast.LENGTH_SHORT).show();
 
 
 
@@ -82,7 +80,7 @@ public class FileboiFilesAdapter extends RecyclerView.Adapter<FileboiFilesAdapte
                                         Log.d("TOKEN", idToken);
                                         // get entries
                                         Request getDownloadUrlRequest = new Request.Builder()
-                                                .url(FileboiAPI.getFileDownloadURL(fileboiFile.getId()))
+                                                .url(FileboiAPI.getFileDownloadURL(files.getId()))
                                                 .get()
                                                 .header("Authorization", "Bearer " + idToken)
                                                 .build();
@@ -130,15 +128,15 @@ public class FileboiFilesAdapter extends RecyclerView.Adapter<FileboiFilesAdapte
 
     @Override
     public int getItemCount() {
-        return fileboiFileList.size();
+        return filesList.size();
     }
 
-    class FileboiFileViewHolder extends RecyclerView.ViewHolder {
+    class FilesViewHolder extends RecyclerView.ViewHolder {
 
         ImageView imageView;
         TextView textView;
 
-        public FileboiFileViewHolder(View itemView) {
+        public FilesViewHolder(View itemView) {
             super(itemView);
 
 //            imageView = itemView.findViewById(R.id.imageView);

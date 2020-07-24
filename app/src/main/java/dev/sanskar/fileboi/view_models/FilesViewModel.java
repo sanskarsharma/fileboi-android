@@ -12,7 +12,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,8 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.sanskar.fileboi.MainActivity;
-import dev.sanskar.fileboi.api.FileboiFile;
+import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import okhttp3.Call;
@@ -31,17 +29,17 @@ import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class FileboiFileViewModel extends ViewModel {
+public class FilesViewModel extends ViewModel {
 
 
     //this is the data that we will fetch asynchronously
-    private MutableLiveData<List<FileboiFile>> fileboiFileList;
+    private MutableLiveData<List<Files>> fileList;
 
     //we will call this method to get the data
-    public LiveData<List<FileboiFile>> getFileboiFiles() {
+    public LiveData<List<Files>> getFiles() {
         //if the list is null
-        if (fileboiFileList == null) {
-            fileboiFileList = new MutableLiveData<List<FileboiFile>>();
+        if (fileList == null) {
+            fileList = new MutableLiveData<List<Files>>();
             //we will load it asynchronously from server in this method
 
             FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -54,7 +52,7 @@ public class FileboiFileViewModel extends ViewModel {
                                     // Send token to your backend via HTTPS
                                     // ...
                                     Log.d("TOKEN", idToken);
-                                    loadFileboiFiles(idToken);
+                                    loadFiles(idToken);
 
                                 } else {
                                     // Handle error -> task.getException();
@@ -66,31 +64,31 @@ public class FileboiFileViewModel extends ViewModel {
         }
 
         //finally we will return the list
-        return fileboiFileList;
+        return fileList;
     }
 
 
     //This method is using Retrofit to get the JSON data from URL
-    private void loadFileboiFiles(String token) {
+    private void loadFiles(String token) {
 //        Retrofit retrofit = new Retrofit.Builder()
 //                .baseUrl(FileboiFileInterface.BASE_URL)
 //                .addConverterFactory(GsonConverterFactory.create())
 //                .build();
 //
 //        FileboiFileInterface api = retrofit.create(FileboiFileInterface.class);
-//        Call<List<FileboiFile>> call = api.getFileboiFiles();
+//        Call<List<Files>> call = api.getFileboiFiles();
 //
 //
-//        call.enqueue(new Callback<List<FileboiFile>>() {
+//        call.enqueue(new Callback<List<Files>>() {
 //            @Override
-//            public void onResponse(Call<List<FileboiFile>> call, Response<List<FileboiFile>> response) {
+//            public void onResponse(Call<List<Files>> call, Response<List<Files>> response) {
 //
 //                //finally we are setting the list to our MutableLiveData
 //                fileboiFileList.setValue(response.body());
 //            }
 //
 //            @Override
-//            public void onFailure(Call<List<FileboiFile>> call, Throwable t) {
+//            public void onFailure(Call<List<Files>> call, Throwable t) {
 //
 //            }
 //        });
@@ -117,12 +115,12 @@ public class FileboiFileViewModel extends ViewModel {
                 JSONArray getUrlResponseJson = null;
                 try {
                     getUrlResponseJson = new JSONArray(responseJsonString);
-                    List<FileboiFile> filebois= new ArrayList<FileboiFile>();
+                    List<Files> filebois= new ArrayList<Files>();
                     for (int i = 0; i < getUrlResponseJson.length(); i++) {
                         JSONObject each = getUrlResponseJson.getJSONObject(i);
-                        filebois.add(new FileboiFile(each.getString("id"), each.getString("name"), each.getString("created_at")));
+                        filebois.add(new Files(each.getString("id"), each.getString("name"), each.getString("created_at")));
                     }
-                    fileboiFileList.postValue(filebois);
+                    fileList.postValue(filebois);
 
                 } catch (JSONException e) {
                     e.printStackTrace();
