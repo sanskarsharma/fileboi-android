@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -29,6 +30,7 @@ import java.util.List;
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
+import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -45,10 +47,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
         this.filesList = filesList;
     }
 
+
     @NonNull
     @Override
     public FilesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mCtx).inflate(R.layout.recyclerview_layout, parent, false);
+        View view = LayoutInflater.from(mCtx).inflate(R.layout.files_entry_cardview, parent, false);
         return new FilesViewHolder(view);
     }
 
@@ -60,8 +63,19 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 //                .load(hero.getImageurl())
 //                .into(holder.imageView);
 
-        holder.textView.setText(files.getName());
-        holder.textView.setOnClickListener(new View.OnClickListener() {
+        holder.itemNameTextView.setText(files.getName());
+        try {
+            String[] arr = DateTimeUtils.getFormattedDateTimeString(files.getCreatedAt()).split("-");
+            String entryDate= arr[0];
+            String entryTime= arr[1];
+            holder.dayDateTextView.setText(entryDate);
+            holder.timeTextView.setText(entryTime);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Toast.makeText(view.getContext(), files.getName(), Toast.LENGTH_SHORT).show();
@@ -133,14 +147,22 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 
     class FilesViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView imageView;
-        TextView textView;
+        CardView cardView;
+        TextView dayDateTextView, timeTextView, itemNameTextView;
+
+//        ImageView imageView;
+//        TextView textView;
 
         public FilesViewHolder(View itemView) {
             super(itemView);
 
+            cardView = itemView.findViewById(R.id.files_cardview);
+            dayDateTextView = itemView.findViewById(R.id.files_cardview_day_date_tv);
+            timeTextView = itemView.findViewById(R.id.files_cardview_time_tv);
+            itemNameTextView = itemView.findViewById(R.id.files_cardview_item_name_tv);
+
 //            imageView = itemView.findViewById(R.id.imageView);
-            textView = itemView.findViewById(R.id.textView);
+//            textView = itemView.findViewById(R.id.textView);
         }
     }
 }

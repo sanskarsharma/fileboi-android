@@ -3,4 +3,10 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+
+
+    <color name="day_n_date_color">#ff8533</color>
+    <color name="time_color">#ff8533</color>
+    <color name="white">#ffffff</color>
+
 </resources>
