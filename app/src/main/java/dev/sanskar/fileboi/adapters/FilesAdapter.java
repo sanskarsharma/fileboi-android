@@ -25,6 +25,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import dev.sanskar.fileboi.R;
@@ -89,9 +90,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                 public void onComplete(@NonNull Task<GetTokenResult> task) {
                                     if (task.isSuccessful()) {
                                         String idToken = task.getResult().getToken();
-                                        // Send token to your backend via HTTPS
-                                        // ...
-                                        Log.d("TOKEN", idToken);
+
                                         // get entries
                                         Request getDownloadUrlRequest = new Request.Builder()
                                                 .url(FileboiAPI.getFileDownloadURL(files.getId()))

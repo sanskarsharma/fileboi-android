@@ -3,6 +3,8 @@ package dev.sanskar.fileboi;
 import android.app.Application;
 import android.content.Context;
 
+import dev.sanskar.fileboi.utilities.notif.NotificationHelper;
+
 public class Fileboi extends Application {
     public static Fileboi instance;
 
@@ -21,6 +23,9 @@ public class Fileboi extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        NotificationHelper notificationHelper = new NotificationHelper(getContext());
+        notificationHelper.createChannels();
     }
 
 }

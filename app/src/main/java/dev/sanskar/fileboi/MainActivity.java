@@ -3,6 +3,7 @@ package dev.sanskar.fileboi;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,8 +21,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -35,6 +34,7 @@ import com.google.firebase.auth.GetTokenResult;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
@@ -43,6 +43,7 @@ import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
+import dev.sanskar.fileboi.utilities.notif.NotificationHelper;
 import dev.sanskar.fileboi.view_models.FilesViewModel;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -51,8 +52,6 @@ import okhttp3.Response;
 
 
 public class MainActivity extends AppCompatActivity {
-
-    ProgressBar progressBar;
 
     SwipeRefreshLayout swipeRefreshLayout;
     FloatingActionButton fabBtnUploadFile;
@@ -71,9 +70,6 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
-
-        progressBar = findViewById(R.id.progressBar);
-        progressBar.setVisibility(View.INVISIBLE);
 
         fabBtnUploadFile = findViewById(R.id.floatingActionButtonUploadFile);
         fabBtnUploadFile.setOnClickListener(new View.OnClickListener() {
@@ -99,9 +95,12 @@ public class MainActivity extends AppCompatActivity {
         filesViewModel.getFiles().observe(this, new Observer<List<Files>>() {
             @Override
             public void onChanged(@Nullable List<Files> filesList) {
+                if (filesList != null) {
+                    // TODO : reversing on client for now ; fix this properly when server supports ordering
+                    Collections.reverse(filesList);
+                }
                 filesAdapter = new FilesAdapter(MainActivity.this, filesList);
                 recyclerView.setAdapter(filesAdapter);
-                Toast.makeText(getApplicationContext(), "hello. i am loaded", Toast.LENGTH_SHORT).show();
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);
                 }
@@ -138,8 +137,6 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 
-            progressBar.setVisibility(View.VISIBLE);
-
             Uri selectedImageUri = data.getData();
             final String imagePath = FileUploadUtils.getPath(this, selectedImageUri);
 
@@ -150,8 +147,6 @@ public class MainActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<GetTokenResult> task) {
                                 if (task.isSuccessful()) {
                                     String idToken = task.getResult().getToken();
-                                    // Send token to your backend via HTTPS
-                                    // ...
                                     new UploadTask().execute(imagePath, idToken);
 
                                 } else {
@@ -189,14 +184,25 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private class UploadTask extends AsyncTask<String, Void, Boolean> {
+    private class UploadTask extends AsyncTask<String, Void, String> {
+
+        NotificationHelper notificationHelper;
+        private final static int NOTIFICATION_ID = 1111;
+
 
         @Override
-        protected Boolean doInBackground(String... params) {
+        protected void onPreExecute() {
+            super.onPreExecute();
 
-            Log.e(TAG, params[0]);
-            Log.e(TAG, params[0]);
+            notificationHelper = new NotificationHelper(MainActivity.this);
+            NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+            notification.setContentTitle("Starting upload");
 
+            notificationHelper.notify(NOTIFICATION_ID, notification);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
 
             try {
 
@@ -204,7 +210,13 @@ public class MainActivity extends AppCompatActivity {
                 String [] namesplit = params[0].split("/");
                 String name = namesplit[namesplit.length-1];
                 jsonObject.put("name", name);
-                Log.e(TAG, jsonObject.toString());
+
+                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+                notification.setContentTitle("Uploading file");
+                notification.setContentText(name);
+                notification.setProgress(100, 0, true);
+                notificationHelper.notify(NOTIFICATION_ID, notification);
+
 
                 // create entry
                 Request getUrlRequest = new Request.Builder()
@@ -216,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
                 Response getUrlResponse = HttpUtils.getHttpClient().newCall(getUrlRequest).execute();
                 if (!getUrlResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(getUrlResponse.code()));
-                    return Boolean.FALSE;
+                    return null;
                 }
                 String responseJsonString = getUrlResponse.body().string();
                 JSONObject getUrlResponseJson = new JSONObject(responseJsonString);
@@ -232,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 Response getUploadUrlResponse = HttpUtils.getHttpClient().newCall(getUploadUrlRequest).execute();
                 if (!getUploadUrlResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(getUploadUrlResponse.code()));
-                    return Boolean.FALSE;
+                    return null;
                 }
                 String respJsonStr = getUploadUrlResponse.body().string();
                 JSONObject uploadurlresp = new JSONObject(respJsonStr);
@@ -248,28 +260,35 @@ public class MainActivity extends AppCompatActivity {
                 Response uploadResponse = HttpUtils.getHttpClient().newCall(uploadFileRequest).execute();
                 if (!uploadResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(uploadResponse.code()));
-                    return Boolean.FALSE;
+                    return null;
                 }
 
-                return Boolean.TRUE;
+                return name;
 
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
-                return Boolean.FALSE;
+                return null;
             }
         }
 
         @Override
-        protected void onPostExecute(Boolean result) {
+        protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            if (!result) {
+            if (result == null) {
                 Log.e(TAG, "UploadTask failed");
-                Toast.makeText(getApplicationContext(), "UploadTask finished with error", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(getApplicationContext(), "UploadTask finished successfully", Toast.LENGTH_LONG).show();
-            }
+                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+                notification.setContentTitle("Upload failed");
+                notification.setProgress(0, 0, false);
+                notificationHelper.notify(NOTIFICATION_ID, notification);
 
-            progressBar.setVisibility(View.INVISIBLE);
+            } else {
+                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+                notification.setContentTitle("Upload complete");
+                notification.setContentText(result);
+                notification.setProgress(0, 0, false);
+                notificationHelper.notify(NOTIFICATION_ID, notification);
+
+            }
 
         }
     }

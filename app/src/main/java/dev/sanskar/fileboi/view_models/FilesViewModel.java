@@ -47,9 +47,6 @@ public class FilesViewModel extends ViewModel {
                             public void onComplete(@NonNull Task<GetTokenResult> task) {
                                 if (task.isSuccessful()) {
                                     String idToken = task.getResult().getToken();
-                                    // Send token to your backend via HTTPS
-                                    // ...
-                                    Log.d("TOKEN", idToken);
                                     loadFiles(idToken);
 
                                 } else {
