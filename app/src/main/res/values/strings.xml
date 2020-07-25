@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Fileboi</string>
+
+    <string name="string_menu_file_option_download">Download</string>
+    <string name="string_menu_file_option_delete">Delete</string>
+
 </resources>

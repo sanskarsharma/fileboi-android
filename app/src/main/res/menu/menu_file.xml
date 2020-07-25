@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_file_option_download"
+        android:title="@string/string_menu_file_option_download"
+        />
+    <item
+        android:id="@+id/menu_file_option_delete"
+        android:orderInCategory="100"
+        android:title="@string/string_menu_file_option_delete"
+        />
+
+</menu>

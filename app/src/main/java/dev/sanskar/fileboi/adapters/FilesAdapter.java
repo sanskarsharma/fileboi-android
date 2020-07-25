@@ -7,14 +7,19 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.cardview.widget.CardView;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
@@ -67,7 +72,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FilesViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final FilesViewHolder holder, int position) {
 
         final Files files = filesList.get(position);
 
@@ -86,14 +91,18 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
             e.printStackTrace();
         }
 
-        holder.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCreateContextMenu(ContextMenu contextMenu, final View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
+            public void onClick(View view) {
 
-                contextMenu.add(0, view.getId(), 0, "Download")
-                        .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem menuItem) {
+                // inflating a popup menu on click
+                PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
+                popupMenu.inflate(R.menu.menu_file);
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(final MenuItem menuItem) {
+                        switch (menuItem.getItemId()) {
+                            case R.id.menu_file_option_download : {
                                 Toast.makeText(mCtx, "Downloading \n" + files.getName(), Toast.LENGTH_SHORT).show();
 
                                 FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -143,88 +152,92 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                             });
                                 }
                                 return true;
+
+
                             }
-                        });
 
-                contextMenu.add(0, view.getId(), 0, "Delete").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        MaterialAlertDialogBuilder deleteConfirmDialog = new MaterialAlertDialogBuilder(mCtx)
-                                .setTitle(files.getName())
-                                .setMessage("Are you sure you want to delete this file from cloud storage ?")
-                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
+                            case R.id.menu_file_option_delete: {
 
-                                    }
-                                })
-                                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
-                                        if (mUser != null) {
-                                            mUser.getIdToken(true)
-                                                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                                                        public void onComplete(@NonNull Task<GetTokenResult> task) {
-                                                            if (task.isSuccessful()) {
-                                                                String idToken = task.getResult().getToken();
+                                MaterialAlertDialogBuilder deleteConfirmDialog = new MaterialAlertDialogBuilder(mCtx)
+                                        .setTitle(files.getName())
+                                        .setMessage("Are you sure you want to delete this file from cloud storage ?")
+                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
 
-                                                                // get entries
-                                                                Request deleteFileRequest = new Request.Builder()
-                                                                        .url(FileboiAPI.getFileResourceURL(files.getId()))
-                                                                        .delete()
-                                                                        .header("Authorization", "Bearer " + idToken)
-                                                                        .build();
-                                                                HttpUtils.getHttpClient().newCall(deleteFileRequest).enqueue(new Callback() {
-                                                                    @Override
-                                                                    public void onFailure(Call call, IOException e) {
+                                            }
+                                        })
+                                        .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+                                                if (mUser != null) {
+                                                    mUser.getIdToken(true)
+                                                            .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                                                                public void onComplete(@NonNull Task<GetTokenResult> task) {
+                                                                    if (task.isSuccessful()) {
+                                                                        String idToken = task.getResult().getToken();
 
-                                                                    }
+                                                                        // get entries
+                                                                        Request deleteFileRequest = new Request.Builder()
+                                                                                .url(FileboiAPI.getFileResourceURL(files.getId()))
+                                                                                .delete()
+                                                                                .header("Authorization", "Bearer " + idToken)
+                                                                                .build();
+                                                                        HttpUtils.getHttpClient().newCall(deleteFileRequest).enqueue(new Callback() {
+                                                                            @Override
+                                                                            public void onFailure(Call call, IOException e) {
 
-                                                                    @Override
-                                                                    public void onResponse(Call call, Response response) throws IOException {
-                                                                        String respJsonStr = response.body().string();
-                                                                        JSONObject apiCallResponse = null;
-                                                                        try {
-                                                                            apiCallResponse = new JSONObject(respJsonStr);
-                                                                            final String name = apiCallResponse.getString("name");
+                                                                            }
 
-                                                                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                                                                @Override
-                                                                                public void run() {
-                                                                                    Toast.makeText(view.getContext(), "Deleted \n" + name, Toast.LENGTH_SHORT).show();
+                                                                            @Override
+                                                                            public void onResponse(Call call, Response response) throws IOException {
+                                                                                String respJsonStr = response.body().string();
+                                                                                JSONObject apiCallResponse = null;
+                                                                                try {
+                                                                                    apiCallResponse = new JSONObject(respJsonStr);
+                                                                                    final String name = apiCallResponse.getString("name");
+
+                                                                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                                                                        @Override
+                                                                                        public void run() {
+                                                                                            Toast.makeText(mCtx, "Deleted \n" + name, Toast.LENGTH_SHORT).show();
+                                                                                        }
+                                                                                    });
+
+                                                                                    // refreshing filesViewModel
+                                                                                    filesViewModel.getFiles();
+
+
+                                                                                } catch (JSONException e) {
+                                                                                    e.printStackTrace();
                                                                                 }
-                                                                            });
-
-                                                                            // refreshing filesViewModel
-                                                                            filesViewModel.getFiles();
 
 
-                                                                        } catch (JSONException e) {
-                                                                            e.printStackTrace();
-                                                                        }
+                                                                            }
+                                                                        });
 
 
+                                                                    } else {
+                                                                        // Handle error -> task.getException();
                                                                     }
-                                                                });
+                                                                }
+                                                            });
+                                                }
 
+                                            }
+                                        })
+                                        ;
+                                deleteConfirmDialog.show();
+                                return true;
 
-                                                            } else {
-                                                                // Handle error -> task.getException();
-                                                            }
-                                                        }
-                                                    });
-                                        }
-
-                                    }
-                                })
-                                ;
-                        deleteConfirmDialog.show();
-                        return true;
+                            }
+                            default:
+                                return false;
+                        }
                     }
                 });
-
-
+                popupMenu.show();
 
             }
         });
