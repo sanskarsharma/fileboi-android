@@ -5,6 +5,46 @@ android {
     compileSdkVersion 29
     buildToolsVersion "30.0.1"
 
+    // build versioning script snippet, taken from : https://stackoverflow.com/a/23265711/7314323
+    // for now, have removed most part related to release builds as it was not needed.
+    // only VERSION_BUILD is being tracked currently.
+    // TODO : make changes here when making release build
+
+    def versionPropsFile = file('version.properties')
+    Properties versionProps = new Properties()
+    if (!versionPropsFile.exists()) {
+        versionProps['VERSION_BUILD'] = "0"
+        versionProps.store(versionPropsFile.newWriter(), null)
+    }
+
+    if (versionPropsFile.canRead()) {
+        versionProps.load(new FileInputStream(versionPropsFile))
+        versionProps['VERSION_BUILD'] = (versionProps['VERSION_BUILD'].toInteger() + 1).toString()
+        versionProps.store(versionPropsFile.newWriter(), null)
+
+        // make change to change major and minor version here, whenever needed
+        def versionMajor = 0
+        def versionMinor = 1
+        def versionPatch = 0
+        def mVersionName = "v${versionMajor}.${versionMinor}.${versionPatch}"
+
+        defaultConfig {
+            minSdkVersion 21
+            targetSdkVersion 29
+            applicationId "dev.sanskar.fileboi"
+
+            versionCode versionProps['VERSION_BUILD'].toInteger()
+            versionName "${mVersionName}(${versionProps['VERSION_BUILD']})"
+
+            // for naming the debug apk appropriately
+            setProperty("archivesBaseName", "fileboi-" + versionName)
+
+        }
+
+    } else {
+        throw new FileNotFoundException("Could not read version.properties!")
+    }
+
     defaultConfig {
         applicationId "dev.sanskar.fileboi"
         minSdkVersion 21
