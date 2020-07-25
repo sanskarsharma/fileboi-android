@@ -1,22 +1,27 @@
 package dev.sanskar.fileboi.adapters;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
@@ -25,14 +30,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
+import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.api.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
+import dev.sanskar.fileboi.view_models.FilesViewModel;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -43,9 +49,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     Context mCtx;
     List<Files> filesList;
 
+    // adding filesViewModel here so that we can call its methods for refreshing data list on operations like delete
+    FilesViewModel filesViewModel ;
+
     public FilesAdapter(Context mCtx, List<Files> filesList) {
         this.mCtx = mCtx;
         this.filesList = filesList;
+        this.filesViewModel = ViewModelProviders.of((MainActivity) mCtx).get(FilesViewModel.class);
     }
 
 
@@ -58,6 +68,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 
     @Override
     public void onBindViewHolder(@NonNull FilesViewHolder holder, int position) {
+
         final Files files = filesList.get(position);
 
 //        Glide.with(mCtx)
@@ -75,68 +86,150 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
             e.printStackTrace();
         }
 
-
-        holder.cardView.setOnClickListener(new View.OnClickListener() {
+        holder.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
-            public void onClick(View view) {
-                Toast.makeText(view.getContext(), files.getName(), Toast.LENGTH_SHORT).show();
+            public void onCreateContextMenu(ContextMenu contextMenu, final View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
+
+                contextMenu.add(0, view.getId(), 0, "Download")
+                        .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                Toast.makeText(mCtx, "Downloading \n" + files.getName(), Toast.LENGTH_SHORT).show();
+
+                                FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+                                if (mUser != null) {
+                                    mUser.getIdToken(true)
+                                            .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                                                public void onComplete(@NonNull Task<GetTokenResult> task) {
+                                                    if (task.isSuccessful()) {
+                                                        String idToken = task.getResult().getToken();
+
+                                                        // get entries
+                                                        Request getDownloadUrlRequest = new Request.Builder()
+                                                                .url(FileboiAPI.getFileDownloadURL(files.getId()))
+                                                                .get()
+                                                                .header("Authorization", "Bearer " + idToken)
+                                                                .build();
+                                                        HttpUtils.getHttpClient().newCall(getDownloadUrlRequest).enqueue(new Callback() {
+                                                            @Override
+                                                            public void onFailure(Call call, IOException e) {
+
+                                                            }
+
+                                                            @Override
+                                                            public void onResponse(Call call, Response response) throws IOException {
+                                                                String respJsonStr = response.body().string();
+                                                                JSONObject uploadurlresp = null;
+                                                                try {
+                                                                    uploadurlresp = new JSONObject(respJsonStr);
+                                                                    String download_url = uploadurlresp.getString("url");
+                                                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(download_url));
+                                                                    mCtx.startActivity(browserIntent);
 
 
-
-                FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
-                if (mUser != null) {
-                    mUser.getIdToken(true)
-                            .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                                public void onComplete(@NonNull Task<GetTokenResult> task) {
-                                    if (task.isSuccessful()) {
-                                        String idToken = task.getResult().getToken();
-
-                                        // get entries
-                                        Request getDownloadUrlRequest = new Request.Builder()
-                                                .url(FileboiAPI.getFileDownloadURL(files.getId()))
-                                                .get()
-                                                .header("Authorization", "Bearer " + idToken)
-                                                .build();
-                                        HttpUtils.getHttpClient().newCall(getDownloadUrlRequest).enqueue(new Callback() {
-                                            @Override
-                                            public void onFailure(Call call, IOException e) {
-
-                                            }
-
-                                            @Override
-                                            public void onResponse(Call call, Response response) throws IOException {
-                                                String respJsonStr = response.body().string();
-                                                JSONObject uploadurlresp = null;
-                                                try {
-                                                    uploadurlresp = new JSONObject(respJsonStr);
-                                                    String download_url = uploadurlresp.getString("url");
-                                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(download_url));
-                                                    mCtx.startActivity(browserIntent);
+                                                                } catch (JSONException e) {
+                                                                    e.printStackTrace();
+                                                                }
 
 
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
+                                                            }
+                                                        });
+
+
+                                                    } else {
+                                                        // Handle error -> task.getException();
+                                                    }
                                                 }
-
-
-                                            }
-                                        });
-
-
-                                    } else {
-                                        // Handle error -> task.getException();
-                                    }
+                                            });
                                 }
-                            });
-                }
+                                return true;
+                            }
+                        });
+
+                contextMenu.add(0, view.getId(), 0, "Delete").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        MaterialAlertDialogBuilder deleteConfirmDialog = new MaterialAlertDialogBuilder(mCtx)
+                                .setTitle(files.getName())
+                                .setMessage("Are you sure you want to delete this file from cloud storage ?")
+                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    }
+                                })
+                                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+                                        if (mUser != null) {
+                                            mUser.getIdToken(true)
+                                                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                                                        public void onComplete(@NonNull Task<GetTokenResult> task) {
+                                                            if (task.isSuccessful()) {
+                                                                String idToken = task.getResult().getToken();
+
+                                                                // get entries
+                                                                Request deleteFileRequest = new Request.Builder()
+                                                                        .url(FileboiAPI.getFileResourceURL(files.getId()))
+                                                                        .delete()
+                                                                        .header("Authorization", "Bearer " + idToken)
+                                                                        .build();
+                                                                HttpUtils.getHttpClient().newCall(deleteFileRequest).enqueue(new Callback() {
+                                                                    @Override
+                                                                    public void onFailure(Call call, IOException e) {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onResponse(Call call, Response response) throws IOException {
+                                                                        String respJsonStr = response.body().string();
+                                                                        JSONObject apiCallResponse = null;
+                                                                        try {
+                                                                            apiCallResponse = new JSONObject(respJsonStr);
+                                                                            final String name = apiCallResponse.getString("name");
+
+                                                                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                                                                @Override
+                                                                                public void run() {
+                                                                                    Toast.makeText(view.getContext(), "Deleted \n" + name, Toast.LENGTH_SHORT).show();
+                                                                                }
+                                                                            });
+
+                                                                            // refreshing filesViewModel
+                                                                            filesViewModel.getFiles();
 
 
+                                                                        } catch (JSONException e) {
+                                                                            e.printStackTrace();
+                                                                        }
 
+
+                                                                    }
+                                                                });
+
+
+                                                            } else {
+                                                                // Handle error -> task.getException();
+                                                            }
+                                                        }
+                                                    });
+                                        }
+
+                                    }
+                                })
+                                ;
+                        deleteConfirmDialog.show();
+                        return true;
+                    }
+                });
 
 
 
             }
         });
+
+
     }
 
     @Override
@@ -149,9 +242,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
         CardView cardView;
         TextView dayDateTextView, timeTextView, itemNameTextView;
 
-//        ImageView imageView;
-//        TextView textView;
-
         public FilesViewHolder(View itemView) {
             super(itemView);
 
@@ -160,8 +250,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
             timeTextView = itemView.findViewById(R.id.files_cardview_time_tv);
             itemNameTextView = itemView.findViewById(R.id.files_cardview_item_name_tv);
 
-//            imageView = itemView.findViewById(R.id.imageView);
-//            textView = itemView.findViewById(R.id.textView);
         }
     }
 }

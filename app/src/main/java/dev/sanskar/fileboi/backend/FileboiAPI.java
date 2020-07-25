@@ -13,4 +13,8 @@ public class FileboiAPI {
         return FILES_URL + "/" + fileId + "/download_url";
     }
 
+    public static String getFileResourceURL(String fileId) {
+        return FILES_URL + "/" + fileId;
+    }
+
 }

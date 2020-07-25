@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1111;
     private boolean mIsPermissionGranted = true;
 
+    FilesViewModel filesViewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        final FilesViewModel filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
+        filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
         filesViewModel.getFiles().observe(this, new Observer<List<Files>>() {
             @Override
             public void onChanged(@Nullable List<Files> filesList) {
@@ -306,6 +308,10 @@ public class MainActivity extends AppCompatActivity {
                 notificationHelper.notify(NOTIFICATION_ID, notification);
 
             }
+
+            // refreshing filesViewModel
+            filesViewModel.getFiles();
+
 
         }
     }
