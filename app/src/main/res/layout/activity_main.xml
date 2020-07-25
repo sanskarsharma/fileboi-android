@@ -34,15 +34,18 @@
         android:id="@+id/floatingActionButtonUploadFile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
         android:clickable="true"
-        app:backgroundTint="#FFEB3B"
+        android:focusable="true"
+        android:scaleType="center"
+        android:src="@mipmap/ic_upload_file"
+        app:backgroundTint="@color/grey"
+        app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.954"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.976"
-        tools:srcCompat="@tools:sample/avatars"
-        android:layout_gravity="bottom|end"
-        android:focusable="true" />
+        app:maxImageSize="48dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

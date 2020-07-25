@@ -8,6 +8,8 @@
     <color name="day_n_date_color">#ff8533</color>
     <color name="time_color">#ff8533</color>
     <color name="white">#ffffff</color>
+    <color name="grey">#fafafa</color>
+
     <color name="cardview_item_name_text_color">#6d6d6d</color>
 
 </resources>
