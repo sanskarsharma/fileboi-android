@@ -3,6 +3,7 @@ package dev.sanskar.fileboi.adapters;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,8 +37,10 @@ import java.util.List;
 
 import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
-import dev.sanskar.fileboi.models.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
+import dev.sanskar.fileboi.models.FileMetadata;
+import dev.sanskar.fileboi.models.Files;
+import dev.sanskar.fileboi.utilities.ConversionUtils;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import dev.sanskar.fileboi.view_models.FilesViewModel;
@@ -46,6 +50,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHolder> {
+
+    public static final String TAG = FilesAdapter.class.getSimpleName();
 
     Context mCtx;
     List<Files> filesList;
@@ -76,7 +82,24 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 //                .load(hero.getImageurl())
 //                .into(holder.imageView);
 
-        holder.itemNameTextView.setText(files.getName());
+        String itemName = files.getName();
+        FileMetadata fileMetadata = files.getFileMetadata();
+        if (fileMetadata != null && fileMetadata.getSizeInBytes() > 0) {
+            itemName = files.getName() + "\n" + "(" + ConversionUtils.getReadableSize(fileMetadata.getSizeInBytes()) + ")";
+            holder.itemNameTextView.setTextColor(ContextCompat.getColor(mCtx, R.color.cardview_item_name_text_color));
+        } else {
+            itemName = files.getName() + "\n" + "(" + "Upload pending"+ ")";
+            holder.itemNameTextView.setTextColor(Color.RED);
+        }
+        // always make sure of adding code in else condition when writing inside onBindViewHolder() for any adapter
+        // viewholders are re-used for elements of list and might mess up the UI if else condition is not explicitly specified
+        // ref : https://stackoverflow.com/a/54819411/7314323
+        // also FIXME : this color setting via code is a temporary work-around for showing status of file upload
+        // Ideally, this should be replaced by better UI with icons etc for showing status etc
+        // Nevertheless, that might also need some if/else's - so this should be noted there too.
+
+        holder.itemNameTextView.setText(itemName);
+
         try {
             String[] arr = DateTimeUtils.getFormattedDateTimeString(files.getCreatedAt()).split("-");
             String entryDate= arr[0];
