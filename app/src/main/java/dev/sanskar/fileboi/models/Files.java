@@ -4,12 +4,7 @@ public class Files {
     private String id;
     private String name;
     private String createdAt;
-
-    public Files(String id, String name, String createdAt) {
-        this.id = id;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
+    private FileMetadata fileMetadata;
 
     public String getId() {
         return id;
@@ -33,5 +28,13 @@ public class Files {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public FileMetadata getFileMetadata() {
+        return fileMetadata;
+    }
+
+    public void setFileMetadata(FileMetadata fileMetadata) {
+        this.fileMetadata = fileMetadata;
     }
 }

@@ -11,24 +11,19 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
+import dev.sanskar.fileboi.backend.FilesApiInterface;
 import dev.sanskar.fileboi.models.Files;
-import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.HttpUtils;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 
 public class FilesViewModel extends ViewModel {
 
+    public static final String TAG = FilesViewModel.class.getSimpleName();
 
     // this is the data that we will fetch asynchronously and observe for change from activity/fragment
     private MutableLiveData<List<Files>> fileList = new MutableLiveData<>();;
@@ -48,59 +43,38 @@ public class FilesViewModel extends ViewModel {
 
                                 } else {
                                     // Handle error -> task.getException();
+                                    // TODO : handle this case gracefully
+
                                 }
                             }
                         });
             }
 
-        // returning the list. when above async task finishes, it will post value to this LiveData list and the observer (from activity/fragment will be notified
+        // returning the list. when above async task finishes, it will post value to this LiveData list and the observer (from activity/fragment) will be notified
         return fileList;
     }
 
 
-    //This method is using Okhttp to get the JSON data from our web service
+    // This method is using retrofit to get the JSON data from our web service
     private void loadFiles(String token) {
 
-        // get entries
-        Request getUrlRequest = new Request.Builder()
-                .url(FileboiAPI.FILES_URL)
-                .get()
-                .header("Authorization", "Bearer " + token)
-                .build();
-        Response getUrlResponse = null;
+        FilesApiInterface filesApiInterface = HttpUtils.getRetrofitInstance(FilesApiInterface.SERVICE_BASE_URL).create(FilesApiInterface.class);
+        Call<List<Files>> callGetFiles = filesApiInterface.getFiles("Bearer " + token);
 
-        HttpUtils.getHttpClient().newCall(getUrlRequest).enqueue(new Callback() {
+        // using enqueue (async callback) instead of execute() as this throws NetworkOnMainThreadException then
+        // probably the caller (firebase callback) does not call this truly async
+        callGetFiles.enqueue(new Callback<List<Files>>() {
             @Override
-            public void onFailure(Call call, IOException e) {
-
+            public void onResponse(@NonNull Call<List<Files>> call, @NonNull Response<List<Files>> response) {
+                fileList.postValue(response.body());
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-
-                // TODO : handle case when api returns non-200 status
-                String responseJsonString = response.body().string();
-                JSONArray getUrlResponseJson = null;
-                try {
-                    getUrlResponseJson = new JSONArray(responseJsonString);
-                    List<Files> filebois= new ArrayList<Files>();
-                    for (int i = 0; i < getUrlResponseJson.length(); i++) {
-                        JSONObject each = getUrlResponseJson.getJSONObject(i);
-                        filebois.add(new Files(each.getString("id"), each.getString("name"), each.getString("created_at")));
-                    }
-                    fileList.postValue(filebois);
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-
-
+            public void onFailure(@NonNull Call<List<Files>> call, @NonNull Throwable t) {
+                // TODO : handle this case gracefully
+                t.printStackTrace();
             }
         });
-
-
-
 
     }
 }
