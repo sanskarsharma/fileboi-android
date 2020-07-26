@@ -37,10 +37,12 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FilesAdapter;
 import dev.sanskar.fileboi.api.Files;
+import dev.sanskar.fileboi.api.UploadTaskResult;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
@@ -166,7 +168,9 @@ public class MainActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<GetTokenResult> task) {
                                 if (task.isSuccessful()) {
                                     String idToken = task.getResult().getToken();
-                                    new UploadTask().execute(imagePath, idToken);
+
+                                    // using THREAD_POOL_EXECUTOR for running multiple parallel executions
+                                    new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
 
                                 } else {
                                     // Handle error -> task.getException();
@@ -203,39 +207,35 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private class UploadTask extends AsyncTask<String, Void, String> {
+    private class UploadTask extends AsyncTask<String, Void, UploadTaskResult> {
 
-        NotificationHelper notificationHelper;
-        private final static int NOTIFICATION_ID = 1111;
-
+        NotificationHelper notificationHelper = new NotificationHelper(MainActivity.this);
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
-            notificationHelper = new NotificationHelper(MainActivity.this);
-            NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
-            notification.setContentTitle("Starting upload");
-
-            notificationHelper.notify(NOTIFICATION_ID, notification);
         }
 
         @Override
-        protected String doInBackground(String... params) {
+        protected UploadTaskResult doInBackground(String... params) {
+
+            int randomInt = new Random().nextInt(999999);
+            String [] namesplit = params[0].split("/");
+            String name = namesplit[namesplit.length-1];
+
+            UploadTaskResult uploadTaskResult = new UploadTaskResult(randomInt, name, false);
+
+            // starting upload notification
+            NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+            notification.setContentTitle("Uploading file");
+            notification.setContentText(name);
+            notification.setProgress(100, 0, true);
+            notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
 
             try {
 
                 JSONObject jsonObject = new JSONObject();
-                String [] namesplit = params[0].split("/");
-                String name = namesplit[namesplit.length-1];
                 jsonObject.put("name", name);
-
-                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
-                notification.setContentTitle("Uploading file");
-                notification.setContentText(name);
-                notification.setProgress(100, 0, true);
-                notificationHelper.notify(NOTIFICATION_ID, notification);
-
 
                 // create entry
                 Request getUrlRequest = new Request.Builder()
@@ -247,12 +247,12 @@ public class MainActivity extends AppCompatActivity {
                 Response getUrlResponse = HttpUtils.getHttpClient().newCall(getUrlRequest).execute();
                 if (!getUrlResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(getUrlResponse.code()));
-                    return null;
+                    uploadTaskResult.setSuccess(false);
+                    return uploadTaskResult;
                 }
                 String responseJsonString = getUrlResponse.body().string();
                 JSONObject getUrlResponseJson = new JSONObject(responseJsonString);
                 String fileId = getUrlResponseJson.getString("id");
-
 
                 // get upload url of entry
                 Request getUploadUrlRequest = new Request.Builder()
@@ -263,14 +263,14 @@ public class MainActivity extends AppCompatActivity {
                 Response getUploadUrlResponse = HttpUtils.getHttpClient().newCall(getUploadUrlRequest).execute();
                 if (!getUploadUrlResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(getUploadUrlResponse.code()));
-                    return null;
+                    uploadTaskResult.setSuccess(false);
+                    return uploadTaskResult;
                 }
                 String respJsonStr = getUploadUrlResponse.body().string();
                 JSONObject uploadurlresp = new JSONObject(respJsonStr);
                 String uploadUrl = uploadurlresp.getString("url");
 
-
-                // Upload file to Amazon.
+                // Upload file to s3.
                 String imagePath = params[0];
                 Request uploadFileRequest = new Request.Builder()
                         .url(uploadUrl)
@@ -279,39 +279,43 @@ public class MainActivity extends AppCompatActivity {
                 Response uploadResponse = HttpUtils.getHttpClient().newCall(uploadFileRequest).execute();
                 if (!uploadResponse.isSuccessful()){
                     Log.e(TAG, String.valueOf(uploadResponse.code()));
-                    return null;
+                    uploadTaskResult.setSuccess(false);
+                    return uploadTaskResult;
                 }
 
-                return name;
+                uploadTaskResult.setSuccess(true);
+                return uploadTaskResult;
 
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
-                return null;
-            }
+
+                uploadTaskResult.setSuccess(false);
+                return uploadTaskResult;            }
         }
 
         @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            if (result == null) {
+        protected void onPostExecute(UploadTaskResult uploadTaskResult) {
+            super.onPostExecute(uploadTaskResult);
+
+            if (uploadTaskResult.isSuccess()) {
+                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
+                notification.setContentTitle("Upload complete");
+                notification.setContentText(uploadTaskResult.getObjectName());
+                notification.setProgress(0, 0, false);
+                notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
+
+            } else {
                 Log.e(TAG, "UploadTask failed");
                 NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
                 notification.setContentTitle("Upload failed");
-                notification.setProgress(0, 0, false);
-                notificationHelper.notify(NOTIFICATION_ID, notification);
+                notification.setContentText("Failed to upload " + uploadTaskResult.getObjectName() + ".\n Please try again. Make sure internet is accessible");
 
-            } else {
-                NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
-                notification.setContentTitle("Upload complete");
-                notification.setContentText(result);
                 notification.setProgress(0, 0, false);
-                notificationHelper.notify(NOTIFICATION_ID, notification);
-
+                notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
             }
 
             // refreshing filesViewModel
             filesViewModel.getFiles();
-
 
         }
     }
