@@ -1,8 +1,5 @@
 package dev.sanskar.fileboi.view_models;
 
-import android.util.Log;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -22,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.sanskar.fileboi.api.Files;
+import dev.sanskar.fileboi.models.Files;
 import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import okhttp3.Call;

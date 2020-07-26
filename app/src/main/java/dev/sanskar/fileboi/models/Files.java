@@ -1,4 +1,4 @@
-package dev.sanskar.fileboi.api;
+package dev.sanskar.fileboi.models;
 
 public class Files {
     private String id;
