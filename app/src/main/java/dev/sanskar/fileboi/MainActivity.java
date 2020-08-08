@@ -118,9 +118,9 @@ public class MainActivity extends AppCompatActivity {
                 if (filesList != null) {
                     // TODO : reversing on client for now ; fix this properly when server supports ordering
                     Collections.reverse(filesList);
+                    filesAdapter = new FilesAdapter(MainActivity.this, filesList);
+                    recyclerView.setAdapter(filesAdapter);
                 }
-                filesAdapter = new FilesAdapter(MainActivity.this, filesList);
-                recyclerView.setAdapter(filesAdapter);
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);
                 }
