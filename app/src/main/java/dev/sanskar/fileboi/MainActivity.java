@@ -116,8 +116,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable List<Files> filesList) {
                 if (filesList != null) {
-                    // TODO : reversing on client for now ; fix this properly when server supports ordering
-                    Collections.reverse(filesList);
                     filesAdapter = new FilesAdapter(MainActivity.this, filesList);
                     recyclerView.setAdapter(filesAdapter);
                 }
