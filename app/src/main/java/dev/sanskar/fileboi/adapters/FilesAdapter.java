@@ -7,11 +7,13 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +24,10 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -69,7 +75,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     @NonNull
     @Override
     public FilesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mCtx).inflate(R.layout.files_entry_cardview, parent, false);
+        View view = LayoutInflater.from(mCtx).inflate(R.layout.files_entry_cardview_new, parent, false);
         return new FilesViewHolder(view);
     }
 
@@ -78,18 +84,40 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 
         final Files files = filesList.get(position);
 
-//        Glide.with(mCtx)
-//                .load(hero.getImageurl())
-//                .into(holder.imageView);
+        int placeholderDrawableResource;
+        if (files.getName().endsWith(".jpeg") || files.getName().endsWith(".jpg") || files.getName().endsWith(".png") || files.getName().endsWith(".gif")) {
+            placeholderDrawableResource = R.drawable.icons8_placeholder_image;
+            Log.e(TAG, files.getExtras().getThumbnailUrl());
+
+        } else if (files.getName().endsWith(".pdf")) {
+            placeholderDrawableResource = R.drawable.icons8_placeholder_pdf;
+        } else if (files.getName().endsWith(".mp4") || (files.getName().endsWith(".3gp"))) {
+            placeholderDrawableResource = R.drawable.icons8_placeholder_video;
+        } else {
+            placeholderDrawableResource = R.drawable.icons8_placeholder_file;
+        }
+
+        RequestOptions requestOptions = new RequestOptions()
+                .placeholder(placeholderDrawableResource)
+                .error(placeholderDrawableResource)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .priority(Priority.HIGH);
+
+        Glide.with(mCtx)
+                .load(files.getExtras().getThumbnailUrl())
+                .apply(requestOptions)
+                .into(holder.imageView);
 
         String itemName = files.getName();
+        holder.itemNameTextView.setText(itemName);
+
         FileMetadata fileMetadata = files.getFileMetadata();
         if (fileMetadata != null && fileMetadata.getSizeInBytes() > 0) {
-            itemName = files.getName() + "\n" + "(" + ConversionUtils.getReadableSize(fileMetadata.getSizeInBytes()) + ")";
-            holder.itemNameTextView.setTextColor(ContextCompat.getColor(mCtx, R.color.cardview_item_name_text_color));
+            holder.shortInfoTextView.setText(ConversionUtils.getReadableSize(fileMetadata.getSizeInBytes()));
+            holder.shortInfoTextView.setTextColor(ContextCompat.getColor(mCtx, R.color.cardview_item_name_text_color));
         } else {
-            itemName = files.getName() + "\n" + "(" + "Upload pending"+ ")";
-            holder.itemNameTextView.setTextColor(Color.RED);
+            holder.shortInfoTextView.setText("(" + "Upload pending"+ ")");
+            holder.shortInfoTextView.setTextColor(Color.RED);
         }
         // always make sure of adding code in else condition when writing inside onBindViewHolder() for any adapter
         // viewholders are re-used for elements of list and might mess up the UI if else condition is not explicitly specified
@@ -98,14 +126,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
         // Ideally, this should be replaced by better UI with icons etc for showing status etc
         // Nevertheless, that might also need some if/else's - so this should be noted there too.
 
-        holder.itemNameTextView.setText(itemName);
-
         try {
             String[] arr = DateTimeUtils.getFormattedDateTimeString(files.getCreatedAt()).split("-");
             String entryDate= arr[0];
             String entryTime= arr[1];
-            holder.dayDateTextView.setText(entryDate);
-            holder.timeTextView.setText(entryTime);
+            holder.dateTimeTextView.setText(entryTime + ", " + entryDate);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -272,15 +297,17 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     class FilesViewHolder extends RecyclerView.ViewHolder {
 
         CardView cardView;
-        TextView dayDateTextView, timeTextView, itemNameTextView;
+        TextView dateTimeTextView, itemNameTextView, shortInfoTextView;
+        ImageView imageView;
 
         public FilesViewHolder(View itemView) {
             super(itemView);
 
-            cardView = itemView.findViewById(R.id.files_cardview);
-            dayDateTextView = itemView.findViewById(R.id.files_cardview_day_date_tv);
-            timeTextView = itemView.findViewById(R.id.files_cardview_time_tv);
-            itemNameTextView = itemView.findViewById(R.id.files_cardview_item_name_tv);
+            cardView = itemView.findViewById(R.id.item_cardView_new);
+            dateTimeTextView = itemView.findViewById(R.id.item_textView_datetime);
+            itemNameTextView = itemView.findViewById(R.id.item_textView_title);
+            shortInfoTextView = itemView.findViewById(R.id.item_textView_shortDescription);
+            imageView = itemView.findViewById(R.id.item_imageView);
 
         }
     }

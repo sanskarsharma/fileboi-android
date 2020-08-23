@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:elevation="4dp"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:id="@+id/item_cardView_new"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:orientation="vertical"
+        android:id="@+id/item_cardView_container"
+        >
+
+        <ImageView
+            android:id="@+id/item_imageView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/icons8_placeholder_file"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            />
+
+        <TextView
+            android:id="@+id/item_textView_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/item_imageView"
+            android:text="filename.ext"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Small"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/item_textView_shortDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/item_textView_title"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_toEndOf="@id/item_imageView"
+            android:text="256 MB"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Small" />
+
+<!--        <TextView-->
+<!--            android:id="@+id/item_textView_tag"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/item_textView_shortDescription"-->
+<!--            android:layout_marginStart="4dp"-->
+<!--            android:layout_marginTop="4dp"-->
+<!--            android:layout_toEndOf="@id/item_imageView"-->
+<!--            android:background="@color/colorPrimary"-->
+<!--            android:paddingStart="16dp"-->
+<!--            android:paddingEnd="16dp"-->
+<!--            android:textAppearance="@style/Base.TextAppearance.AppCompat.Small.Inverse"-->
+<!--            android:textStyle="bold" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/item_textView_boldInfo"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/item_textView_tag"-->
+<!--            android:layout_marginStart="4dp"-->
+<!--            android:layout_marginTop="4dp"-->
+<!--            android:layout_toEndOf="@id/item_imageView"-->
+<!--            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"-->
+<!--            android:textStyle="bold" -->
+<!--            android:text="Hello"-->
+<!--            />-->
+
+        <TextView
+            android:id="@+id/item_textView_datetime"
+            android:textColor="@color/day_n_date_color"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:textSize="12sp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignBottom="@+id/item_imageView"
+            android:text="2:36 PM, today"
+            />
+
+    </RelativeLayout>
+
+
+</androidx.cardview.widget.CardView>

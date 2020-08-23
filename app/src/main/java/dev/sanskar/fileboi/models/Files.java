@@ -5,6 +5,15 @@ public class Files {
     private String name;
     private String createdAt;
     private FileMetadata fileMetadata;
+    private FileExtras extras;
+
+    public FileExtras getExtras() {
+        return extras;
+    }
+
+    public void setExtras(FileExtras extras) {
+        this.extras = extras;
+    }
 
     public String getId() {
         return id;
@@ -36,5 +45,16 @@ public class Files {
 
     public void setFileMetadata(FileMetadata fileMetadata) {
         this.fileMetadata = fileMetadata;
+    }
+
+    @Override
+    public String toString() {
+        return "Files{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", createdAt='" + createdAt + '\'' +
+                ", fileMetadata=" + fileMetadata +
+                ", extras=" + extras +
+                '}';
     }
 }
