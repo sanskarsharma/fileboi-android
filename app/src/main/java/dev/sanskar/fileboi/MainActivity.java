@@ -1,16 +1,7 @@
 package dev.sanskar.fileboi;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -23,6 +14,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -34,15 +35,16 @@ import com.google.firebase.auth.GetTokenResult;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FilesAdapter;
+import dev.sanskar.fileboi.backend.FileboiAPI;
 import dev.sanskar.fileboi.models.Files;
 import dev.sanskar.fileboi.models.UploadTaskResult;
-import dev.sanskar.fileboi.backend.FileboiAPI;
+import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import dev.sanskar.fileboi.utilities.notif.NotificationHelper;
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 final Intent getFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 getFileIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                getFileIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 getFileIntent.setType("*/*");
                 if (mIsPermissionGranted) {
                     startActivityForResult(getFileIntent, REQUEST_CODE);
@@ -155,9 +158,22 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 
-            Uri selectedImageUri = data.getData();
-            final String imagePath = FileUploadUtils.getPath(this, selectedImageUri);
+            final List<Uri> uriList = new ArrayList<>();
 
+            // checking multiple selection or not ; ref : https://stackoverflow.com/a/48824844/7314323
+            if(null != data.getClipData()) {
+                if (data.getClipData().getItemCount() > Constants.FILE_SELECTION_MAX_COUNT) {
+                    Toast.makeText(this, "Can't share more than 10 media items in one selection", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                for(int i = 0; i < data.getClipData().getItemCount(); i++) {
+                    uriList.add(data.getClipData().getItemAt(i).getUri());
+                }
+            } else {
+                uriList.add(data.getData());
+            }
+
+            final Context context = this;
             FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
             if (mUser != null) {
                 mUser.getIdToken(true)
@@ -166,8 +182,12 @@ public class MainActivity extends AppCompatActivity {
                                 if (task.isSuccessful()) {
                                     String idToken = task.getResult().getToken();
 
-                                    // using THREAD_POOL_EXECUTOR for running multiple parallel executions
-                                    new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
+                                    for (Uri uri : uriList) {  // TODO : instead of looping here, pass the list and make appropriate changes in UploadTask to handle it. This way, multiple files would be uploaded serially in order instead of all at once
+                                        String imagePath = FileUploadUtils.getPath(context, uri);
+
+                                        // using THREAD_POOL_EXECUTOR for running multiple parallel executions
+                                        new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
+                                    }
 
                                 } else {
                                     // Handle error -> task.getException();
