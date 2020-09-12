@@ -2,6 +2,7 @@ package dev.sanskar.fileboi;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -27,6 +28,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -153,6 +155,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void processSelectedFiles(final List<Uri> uriList) {
+        final Context context = this;
+        FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (mUser != null) {
+            mUser.getIdToken(true)
+                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                        public void onComplete(@NonNull Task<GetTokenResult> task) {
+                            if (task.isSuccessful()) {
+                                String idToken = task.getResult().getToken();
+
+                                for (Uri uri : uriList) {  // TODO : instead of looping here, pass the list and make appropriate changes in UploadTask to handle it. This way, multiple files would be uploaded serially in order instead of all at once
+                                    String imagePath = FileUploadUtils.getPath(context, uri);
+
+                                    // using THREAD_POOL_EXECUTOR for running multiple parallel executions
+                                    new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
+                                }
+
+                            } else {
+                                // Handle error -> task.getException();
+                            }
+                        }
+                    });
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -173,28 +200,17 @@ public class MainActivity extends AppCompatActivity {
                 uriList.add(data.getData());
             }
 
-            final Context context = this;
-            FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (mUser != null) {
-                mUser.getIdToken(true)
-                        .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                            public void onComplete(@NonNull Task<GetTokenResult> task) {
-                                if (task.isSuccessful()) {
-                                    String idToken = task.getResult().getToken();
-
-                                    for (Uri uri : uriList) {  // TODO : instead of looping here, pass the list and make appropriate changes in UploadTask to handle it. This way, multiple files would be uploaded serially in order instead of all at once
-                                        String imagePath = FileUploadUtils.getPath(context, uri);
-
-                                        // using THREAD_POOL_EXECUTOR for running multiple parallel executions
-                                        new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
-                                    }
-
-                                } else {
-                                    // Handle error -> task.getException();
-                                }
-                            }
-                        });
-            }
+            // ask for confirmation
+            MaterialAlertDialogBuilder uploadConfirmDialog = new MaterialAlertDialogBuilder(this)
+                    .setMessage("Upload " +  String.valueOf(uriList.size()) +" files ?")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            processSelectedFiles(uriList);
+                        }
+                    });
+            uploadConfirmDialog.show();
         }
     }
 
