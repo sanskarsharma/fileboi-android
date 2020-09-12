@@ -140,6 +140,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        // Get intent for capturing share menu intents
+        Intent incomingIntent = getIntent();
+        // currently incoming intent can have any MimeType, there is no way to ensure whether it is a file or plain text
+        // this can be done by using (scheme = file) or (scheme = content) attributes in intent filter
+        // but the intent that is sharing the file with your app might not supply the scheme information
+        // and due to this our app will not appear in the share menu of the app from which the file is being shared
+        // all in all, hard to filter "only files" using intent filter currently
+        // there is an open question on SO for this : https://stackoverflow.com/questions/12247957/intent-filter-for-files-only
+        if ((Intent.ACTION_SEND.equals(incomingIntent.getAction()) || Intent.ACTION_SEND_MULTIPLE.equals(incomingIntent.getAction())) && incomingIntent.getType() != null) {
+            handleFileSelectionIntent(incomingIntent);
+        }
+
     }
 
     @Override
@@ -180,37 +193,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void handleFileSelectionIntent (Intent dataIntent) {
+        final List<Uri> uriList = new ArrayList<>();
+
+        // checking multiple selection or not ; ref : https://stackoverflow.com/a/48824844/7314323
+        if(null != dataIntent.getClipData()) {
+            if (dataIntent.getClipData().getItemCount() > Constants.FILE_SELECTION_MAX_COUNT) {
+                Toast.makeText(this, "Can't share more than 10 media items in one selection", Toast.LENGTH_LONG).show();
+                return;
+            }
+            for(int i = 0; i < dataIntent.getClipData().getItemCount(); i++) {
+                uriList.add(dataIntent.getClipData().getItemAt(i).getUri());
+            }
+        } else {
+            uriList.add(dataIntent.getData());
+        }
+
+        // ask for confirmation
+        MaterialAlertDialogBuilder uploadConfirmDialog = new MaterialAlertDialogBuilder(this)
+                .setMessage("Upload " +  String.valueOf(uriList.size()) +" files ?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        processSelectedFiles(uriList);
+                    }
+                });
+        uploadConfirmDialog.show();
+    }
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-
-            final List<Uri> uriList = new ArrayList<>();
-
-            // checking multiple selection or not ; ref : https://stackoverflow.com/a/48824844/7314323
-            if(null != data.getClipData()) {
-                if (data.getClipData().getItemCount() > Constants.FILE_SELECTION_MAX_COUNT) {
-                    Toast.makeText(this, "Can't share more than 10 media items in one selection", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                for(int i = 0; i < data.getClipData().getItemCount(); i++) {
-                    uriList.add(data.getClipData().getItemAt(i).getUri());
-                }
-            } else {
-                uriList.add(data.getData());
-            }
-
-            // ask for confirmation
-            MaterialAlertDialogBuilder uploadConfirmDialog = new MaterialAlertDialogBuilder(this)
-                    .setMessage("Upload " +  String.valueOf(uriList.size()) +" files ?")
-                    .setNegativeButton("Cancel", null)
-                    .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            processSelectedFiles(uriList);
-                        }
-                    });
-            uploadConfirmDialog.show();
+            handleFileSelectionIntent(data);
         }
     }
 
