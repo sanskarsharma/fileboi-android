@@ -35,29 +35,23 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.List;
 
 import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
-import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.models.FileEntry;
 import dev.sanskar.fileboi.core.models.FileMetadata;
+import dev.sanskar.fileboi.core.schema.FileURLResponse;
+import dev.sanskar.fileboi.core.services.FilesAPIService;
 import dev.sanskar.fileboi.utilities.ConversionUtils;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import dev.sanskar.fileboi.view_models.FilesViewModel;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHolder> {
 
     public static final String TAG = FilesAdapter.class.getSimpleName();
+    private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
 
     Context mCtx;
     List<FileEntry> fileEntryList;
@@ -157,39 +151,24 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                     if (task.isSuccessful()) {
                                                         String idToken = task.getResult().getToken();
 
-                                                        // get entries
-                                                        Request getDownloadUrlRequest = new Request.Builder()
-                                                                .url(FileboiAPI.getFileDownloadURL(fileEntry.getId()))
-                                                                .get()
-                                                                .header("Authorization", "Bearer " + idToken)
-                                                                .build();
-                                                        HttpUtils.getHttpClient().newCall(getDownloadUrlRequest).enqueue(new Callback() {
+                                                        retrofit2.Call<FileURLResponse> getFileDownloadUrl = filesAPIService.getFileDownloadUrl("Bearer " + idToken, fileEntry.getId());
+                                                        getFileDownloadUrl.enqueue(new retrofit2.Callback<FileURLResponse>() {
                                                             @Override
-                                                            public void onFailure(Call call, IOException e) {
-
+                                                            public void onResponse(retrofit2.Call<FileURLResponse> call, retrofit2.Response<FileURLResponse> response) {
+                                                                // open download URL in browser
+                                                                FileURLResponse fileURLResponse = response.body();
+                                                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(fileURLResponse.getUrl()));
+                                                                mCtx.startActivity(browserIntent);
                                                             }
 
                                                             @Override
-                                                            public void onResponse(Call call, Response response) throws IOException {
-                                                                String respJsonStr = response.body().string();
-                                                                JSONObject uploadurlresp = null;
-                                                                try {
-                                                                    uploadurlresp = new JSONObject(respJsonStr);
-                                                                    String download_url = uploadurlresp.getString("url");
-                                                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(download_url));
-                                                                    mCtx.startActivity(browserIntent);
-
-
-                                                                } catch (JSONException e) {
-                                                                    e.printStackTrace();
-                                                                }
-
+                                                            public void onFailure(retrofit2.Call<FileURLResponse> call, Throwable t) {
 
                                                             }
                                                         });
 
-
                                                     } else {
+                                                        // failed to fetch token from firebase
                                                         // Handle error -> task.getException();
                                                     }
                                                 }
@@ -222,47 +201,32 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                                     if (task.isSuccessful()) {
                                                                         String idToken = task.getResult().getToken();
 
-                                                                        // get entries
-                                                                        Request deleteFileRequest = new Request.Builder()
-                                                                                .url(FileboiAPI.getFileResourceURL(fileEntry.getId()))
-                                                                                .delete()
-                                                                                .header("Authorization", "Bearer " + idToken)
-                                                                                .build();
-                                                                        HttpUtils.getHttpClient().newCall(deleteFileRequest).enqueue(new Callback() {
+                                                                        retrofit2.Call<FileEntry> deleteFile = filesAPIService.deleteFile("Bearer " + idToken, fileEntry.getId());
+                                                                        deleteFile.enqueue(new retrofit2.Callback<FileEntry>() {
                                                                             @Override
-                                                                            public void onFailure(Call call, IOException e) {
+                                                                            public void onResponse(retrofit2.Call<FileEntry> call, retrofit2.Response<FileEntry> response) {
 
+                                                                                // show toast message for file deleted
+                                                                                final FileEntry deletedFileEntry = response.body();
+                                                                                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                                                                    @Override
+                                                                                    public void run() {
+                                                                                        Toast.makeText(mCtx, "Deleted \n" + deletedFileEntry.getName(), Toast.LENGTH_SHORT).show();
+                                                                                    }
+                                                                                });
+
+                                                                                // refresh list
+                                                                                filesViewModel.getFiles();
                                                                             }
 
                                                                             @Override
-                                                                            public void onResponse(Call call, Response response) throws IOException {
-                                                                                String respJsonStr = response.body().string();
-                                                                                JSONObject apiCallResponse = null;
-                                                                                try {
-                                                                                    apiCallResponse = new JSONObject(respJsonStr);
-                                                                                    final String name = apiCallResponse.getString("name");
-
-                                                                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                                                                        @Override
-                                                                                        public void run() {
-                                                                                            Toast.makeText(mCtx, "Deleted \n" + name, Toast.LENGTH_SHORT).show();
-                                                                                        }
-                                                                                    });
-
-                                                                                    // refreshing filesViewModel
-                                                                                    filesViewModel.getFiles();
-
-
-                                                                                } catch (JSONException e) {
-                                                                                    e.printStackTrace();
-                                                                                }
-
-
+                                                                            public void onFailure(retrofit2.Call<FileEntry> call, Throwable t) {
+                                                                                // failed to delete file, api call failed
                                                                             }
                                                                         });
 
-
                                                                     } else {
+                                                                        // failed to fetch token from firebase
                                                                         // Handle error -> task.getException();
                                                                     }
                                                                 }
