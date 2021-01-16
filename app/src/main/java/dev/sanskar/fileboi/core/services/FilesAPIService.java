@@ -1,4 +1,4 @@
-package dev.sanskar.fileboi.backend;
+package dev.sanskar.fileboi.core.services;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 
-public interface FilesApiInterface {
+public interface FilesAPIService {
 
     public static final String SERVICE_BASE_URL = "https://fileboi-rwac7a5nuq-de.a.run.app/fileboi/";
 

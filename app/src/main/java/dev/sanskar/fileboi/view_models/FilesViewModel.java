@@ -13,7 +13,7 @@ import com.google.firebase.auth.GetTokenResult;
 
 import java.util.List;
 
-import dev.sanskar.fileboi.backend.FilesApiInterface;
+import dev.sanskar.fileboi.core.services.FilesAPIService;
 import dev.sanskar.fileboi.core.models.FileEntry;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import retrofit2.Call;
@@ -58,8 +58,8 @@ public class FilesViewModel extends ViewModel {
     // This method is using retrofit to get the JSON data from our web service
     private void loadFiles(String token) {
 
-        FilesApiInterface filesApiInterface = HttpUtils.getRetrofitInstance(FilesApiInterface.SERVICE_BASE_URL).create(FilesApiInterface.class);
-        Call<List<FileEntry>> callGetFiles = filesApiInterface.getFiles("Bearer " + token);
+        FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
+        Call<List<FileEntry>> callGetFiles = filesAPIService.getFiles("Bearer " + token);
 
         // using enqueue (async callback) instead of execute() as this throws NetworkOnMainThreadException then
         // probably the caller (firebase callback) does not call this truly async
