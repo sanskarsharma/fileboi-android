@@ -21,9 +21,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class FilesViewModel extends ViewModel {
+public class FileItemViewModel extends ViewModel {
 
-    public static final String TAG = FilesViewModel.class.getSimpleName();
+    public static final String TAG = FileItemViewModel.class.getSimpleName();
 
     // this is the data that we will fetch asynchronously and observe for change from activity/fragment
     private MutableLiveData<List<FileItem>> mutableLiveData = new MutableLiveData<>();;

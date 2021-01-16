@@ -50,7 +50,7 @@ import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import dev.sanskar.fileboi.utilities.notif.NotificationHelper;
-import dev.sanskar.fileboi.view_models.FilesViewModel;
+import dev.sanskar.fileboi.view_models.FileItemViewModel;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1111;
     private boolean mIsPermissionGranted = true;
 
-    FilesViewModel filesViewModel;
+    FileItemViewModel filesViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
+        filesViewModel = ViewModelProviders.of(this).get(FileItemViewModel.class);
         filesViewModel.getLiveData().observe(this, new Observer<List<FileItem>>() {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
