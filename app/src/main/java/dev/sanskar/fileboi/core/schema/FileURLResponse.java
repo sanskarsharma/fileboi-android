@@ -1,4 +1,4 @@
-package dev.sanskar.fileboi.models;
+package dev.sanskar.fileboi.core.schema;
 
 public class FileURLResponse {
     private String url;

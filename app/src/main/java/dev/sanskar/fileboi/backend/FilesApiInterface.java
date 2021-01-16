@@ -2,8 +2,8 @@ package dev.sanskar.fileboi.backend;
 
 import java.util.List;
 
-import dev.sanskar.fileboi.models.FileEntry;
-import dev.sanskar.fileboi.models.FileURLResponse;
+import dev.sanskar.fileboi.core.models.FileEntry;
+import dev.sanskar.fileboi.core.schema.FileURLResponse;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;

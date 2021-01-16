@@ -14,7 +14,7 @@ import com.google.firebase.auth.GetTokenResult;
 import java.util.List;
 
 import dev.sanskar.fileboi.backend.FilesApiInterface;
-import dev.sanskar.fileboi.models.FileEntry;
+import dev.sanskar.fileboi.core.models.FileEntry;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import retrofit2.Call;
 import retrofit2.Callback;

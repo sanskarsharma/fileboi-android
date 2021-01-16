@@ -1,4 +1,4 @@
-package dev.sanskar.fileboi.models;
+package dev.sanskar.fileboi.core.models;
 
 public class FileEntry {
     private String id;
