@@ -43,8 +43,8 @@ import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FilesAdapter;
+import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.services.FileboiAPI;
-import dev.sanskar.fileboi.core.models.FileEntry;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
 import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
@@ -117,11 +117,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
-        filesViewModel.getLiveData().observe(this, new Observer<List<FileEntry>>() {
+        filesViewModel.getLiveData().observe(this, new Observer<List<FileItem>>() {
             @Override
-            public void onChanged(@Nullable List<FileEntry> fileEntryList) {
-                if (fileEntryList != null) {
-                    filesAdapter = new FilesAdapter(MainActivity.this, fileEntryList);
+            public void onChanged(@Nullable List<FileItem> fileItemList) {
+                if (fileItemList != null) {
+                    filesAdapter = new FilesAdapter(MainActivity.this, fileItemList);
                     recyclerView.setAdapter(filesAdapter);
                 }
                 if (swipeRefreshLayout.isRefreshing()) {

@@ -2,7 +2,7 @@ package dev.sanskar.fileboi.core.services;
 
 import java.util.List;
 
-import dev.sanskar.fileboi.core.models.FileEntry;
+import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.schema.FileURLResponse;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -17,10 +17,10 @@ public interface FilesAPIService {
     public static final String SERVICE_BASE_URL = "https://fileboi-rwac7a5nuq-de.a.run.app/fileboi/";
 
     @POST("files")
-    Call<FileEntry> createFile(@Header("Authorization") String authHeader, @Body FileEntry file);
+    Call<FileItem> createFile(@Header("Authorization") String authHeader, @Body FileItem file);
 
     @GET("files")
-    Call<List<FileEntry>> getFiles(@Header("Authorization") String authHeader);
+    Call<List<FileItem>> getFiles(@Header("Authorization") String authHeader);
 
     @GET("files/{file_id}/upload_url")
     Call<FileURLResponse> getFileUploadUrl(@Header("Authorization") String authHeader, @Path("file_id") String fileId);
@@ -29,5 +29,5 @@ public interface FilesAPIService {
     Call<FileURLResponse> getFileDownloadUrl(@Header("Authorization") String authHeader, @Path("file_id") String fileId);
 
     @DELETE("files/{file_id}")
-    Call<FileEntry> deleteFile(@Header("Authorization") String authHeader, @Path("file_id") String fileId);
+    Call<FileItem> deleteFile(@Header("Authorization") String authHeader, @Path("file_id") String fileId);
 }

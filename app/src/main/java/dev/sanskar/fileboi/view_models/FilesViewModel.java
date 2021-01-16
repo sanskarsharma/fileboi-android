@@ -14,7 +14,7 @@ import com.google.firebase.auth.GetTokenResult;
 import java.util.List;
 
 import dev.sanskar.fileboi.core.services.FilesAPIService;
-import dev.sanskar.fileboi.core.models.FileEntry;
+import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,10 +26,10 @@ public class FilesViewModel extends ViewModel {
     public static final String TAG = FilesViewModel.class.getSimpleName();
 
     // this is the data that we will fetch asynchronously and observe for change from activity/fragment
-    private MutableLiveData<List<FileEntry>> mutableLiveData = new MutableLiveData<>();;
+    private MutableLiveData<List<FileItem>> mutableLiveData = new MutableLiveData<>();;
 
     // we will call this method to get the data
-    public LiveData<List<FileEntry>> getLiveData() {
+    public LiveData<List<FileItem>> getLiveData() {
 
         callLoadFiles();
         // returning the list. when above async task finishes, it will post value to this LiveData list and the observer (from activity/fragment) will be notified
@@ -63,18 +63,18 @@ public class FilesViewModel extends ViewModel {
     private void loadFiles(String token) {
 
         FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
-        Call<List<FileEntry>> callGetFiles = filesAPIService.getFiles("Bearer " + token);
+        Call<List<FileItem>> callGetFiles = filesAPIService.getFiles("Bearer " + token);
 
         // using enqueue (async callback) instead of execute() as this throws NetworkOnMainThreadException then
         // probably the caller (firebase callback) does not call this truly async
-        callGetFiles.enqueue(new Callback<List<FileEntry>>() {
+        callGetFiles.enqueue(new Callback<List<FileItem>>() {
             @Override
-            public void onResponse(@NonNull Call<List<FileEntry>> call, @NonNull Response<List<FileEntry>> response) {
+            public void onResponse(@NonNull Call<List<FileItem>> call, @NonNull Response<List<FileItem>> response) {
                 mutableLiveData.postValue(response.body());
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<FileEntry>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<List<FileItem>> call, @NonNull Throwable t) {
                 // TODO : handle this case gracefully
                 t.printStackTrace();
             }

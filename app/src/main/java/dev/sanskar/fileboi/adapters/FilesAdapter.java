@@ -39,7 +39,7 @@ import java.util.List;
 
 import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
-import dev.sanskar.fileboi.core.models.FileEntry;
+import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.models.FileMetadata;
 import dev.sanskar.fileboi.core.schema.FileURLResponse;
 import dev.sanskar.fileboi.core.services.FilesAPIService;
@@ -54,14 +54,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
 
     Context mCtx;
-    List<FileEntry> fileEntryList;
+    List<FileItem> fileItemList;
 
     // adding filesViewModel here so that we can call its methods for refreshing data list on operations like delete
     FilesViewModel filesViewModel ;
 
-    public FilesAdapter(Context mCtx, List<FileEntry> fileEntryList) {
+    public FilesAdapter(Context mCtx, List<FileItem> fileItemList) {
         this.mCtx = mCtx;
-        this.fileEntryList = fileEntryList;
+        this.fileItemList = fileItemList;
         this.filesViewModel = ViewModelProviders.of((MainActivity) mCtx).get(FilesViewModel.class);
     }
 
@@ -76,16 +76,16 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     @Override
     public void onBindViewHolder(@NonNull final FilesViewHolder holder, int position) {
 
-        final FileEntry fileEntry = fileEntryList.get(position);
+        final FileItem fileItem = fileItemList.get(position);
 
         int placeholderDrawableResource;
-        if (fileEntry.getName().endsWith(".jpeg") || fileEntry.getName().endsWith(".jpg") || fileEntry.getName().endsWith(".png") || fileEntry.getName().endsWith(".gif")) {
+        if (fileItem.getName().endsWith(".jpeg") || fileItem.getName().endsWith(".jpg") || fileItem.getName().endsWith(".png") || fileItem.getName().endsWith(".gif")) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_image;
-            Log.e(TAG, fileEntry.getExtras().getThumbnailUrl());
+            Log.e(TAG, fileItem.getExtras().getThumbnailUrl());
 
-        } else if (fileEntry.getName().endsWith(".pdf")) {
+        } else if (fileItem.getName().endsWith(".pdf")) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_pdf;
-        } else if (fileEntry.getName().endsWith(".mp4") || (fileEntry.getName().endsWith(".3gp"))) {
+        } else if (fileItem.getName().endsWith(".mp4") || (fileItem.getName().endsWith(".3gp"))) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_video;
         } else {
             placeholderDrawableResource = R.drawable.icons8_placeholder_file;
@@ -98,14 +98,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                 .priority(Priority.HIGH);
 
         Glide.with(mCtx)
-                .load(fileEntry.getExtras().getThumbnailUrl())
+                .load(fileItem.getExtras().getThumbnailUrl())
                 .apply(requestOptions)
                 .into(holder.imageView);
 
-        String itemName = fileEntry.getName();
+        String itemName = fileItem.getName();
         holder.itemNameTextView.setText(itemName);
 
-        FileMetadata fileMetadata = fileEntry.getFileMetadata();
+        FileMetadata fileMetadata = fileItem.getFileMetadata();
         if (fileMetadata != null && fileMetadata.getSizeInBytes() > 0) {
             holder.shortInfoTextView.setText(ConversionUtils.getReadableSize(fileMetadata.getSizeInBytes()));
             holder.shortInfoTextView.setTextColor(ContextCompat.getColor(mCtx, R.color.cardview_item_name_text_color));
@@ -121,7 +121,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
         // Nevertheless, that might also need some if/else's - so this should be noted there too.
 
         try {
-            String[] arr = DateTimeUtils.getFormattedDateTimeString(fileEntry.getCreatedAt()).split("-");
+            String[] arr = DateTimeUtils.getFormattedDateTimeString(fileItem.getCreatedAt()).split("-");
             String entryDate= arr[0];
             String entryTime= arr[1];
             holder.dateTimeTextView.setText(entryTime + ", " + entryDate);
@@ -141,7 +141,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                     public boolean onMenuItemClick(final MenuItem menuItem) {
                         switch (menuItem.getItemId()) {
                             case R.id.menu_file_option_download : {
-                                Toast.makeText(mCtx, "Downloading \n" + fileEntry.getName(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mCtx, "Downloading \n" + fileItem.getName(), Toast.LENGTH_SHORT).show();
 
                                 FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
                                 if (mUser != null) {
@@ -151,7 +151,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                     if (task.isSuccessful()) {
                                                         String idToken = task.getResult().getToken();
 
-                                                        retrofit2.Call<FileURLResponse> getFileDownloadUrl = filesAPIService.getFileDownloadUrl("Bearer " + idToken, fileEntry.getId());
+                                                        retrofit2.Call<FileURLResponse> getFileDownloadUrl = filesAPIService.getFileDownloadUrl("Bearer " + idToken, fileItem.getId());
                                                         getFileDownloadUrl.enqueue(new retrofit2.Callback<FileURLResponse>() {
                                                             @Override
                                                             public void onResponse(retrofit2.Call<FileURLResponse> call, retrofit2.Response<FileURLResponse> response) {
@@ -182,7 +182,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                             case R.id.menu_file_option_delete: {
 
                                 MaterialAlertDialogBuilder deleteConfirmDialog = new MaterialAlertDialogBuilder(mCtx)
-                                        .setTitle(fileEntry.getName())
+                                        .setTitle(fileItem.getName())
                                         .setMessage("Are you sure you want to delete this file from cloud storage ?")
                                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                                             @Override
@@ -201,17 +201,17 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                                     if (task.isSuccessful()) {
                                                                         String idToken = task.getResult().getToken();
 
-                                                                        retrofit2.Call<FileEntry> deleteFile = filesAPIService.deleteFile("Bearer " + idToken, fileEntry.getId());
-                                                                        deleteFile.enqueue(new retrofit2.Callback<FileEntry>() {
+                                                                        retrofit2.Call<FileItem> deleteFile = filesAPIService.deleteFile("Bearer " + idToken, fileItem.getId());
+                                                                        deleteFile.enqueue(new retrofit2.Callback<FileItem>() {
                                                                             @Override
-                                                                            public void onResponse(retrofit2.Call<FileEntry> call, retrofit2.Response<FileEntry> response) {
+                                                                            public void onResponse(retrofit2.Call<FileItem> call, retrofit2.Response<FileItem> response) {
 
                                                                                 // show toast message for file deleted
-                                                                                final FileEntry deletedFileEntry = response.body();
+                                                                                final FileItem deletedFileItem = response.body();
                                                                                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                                                                                     @Override
                                                                                     public void run() {
-                                                                                        Toast.makeText(mCtx, "Deleted \n" + deletedFileEntry.getName(), Toast.LENGTH_SHORT).show();
+                                                                                        Toast.makeText(mCtx, "Deleted \n" + deletedFileItem.getName(), Toast.LENGTH_SHORT).show();
                                                                                     }
                                                                                 });
 
@@ -220,7 +220,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                                             }
 
                                                                             @Override
-                                                                            public void onFailure(retrofit2.Call<FileEntry> call, Throwable t) {
+                                                                            public void onFailure(retrofit2.Call<FileItem> call, Throwable t) {
                                                                                 // failed to delete file, api call failed
                                                                             }
                                                                         });
@@ -255,7 +255,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
 
     @Override
     public int getItemCount() {
-        return fileEntryList.size();
+        return fileItemList.size();
     }
 
     class FilesViewHolder extends RecyclerView.ViewHolder {
