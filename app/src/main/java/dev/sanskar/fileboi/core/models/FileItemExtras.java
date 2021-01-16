@@ -1,10 +1,10 @@
 package dev.sanskar.fileboi.core.models;
 
-public class FileExtras {
+public class FileItemExtras {
 
     private String thumbnailUrl;
 
-    public FileExtras(String thumbnailUrl) {
+    public FileItemExtras(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
 

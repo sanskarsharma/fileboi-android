@@ -5,13 +5,13 @@ public class FileItem {
     private String name;
     private String createdAt;
     private FileMetadata fileMetadata;
-    private FileExtras extras;
+    private FileItemExtras extras;
 
-    public FileExtras getExtras() {
+    public FileItemExtras getExtras() {
         return extras;
     }
 
-    public void setExtras(FileExtras extras) {
+    public void setExtras(FileItemExtras extras) {
         this.extras = extras;
     }
 
