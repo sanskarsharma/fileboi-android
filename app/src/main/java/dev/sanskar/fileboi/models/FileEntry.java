@@ -1,6 +1,6 @@
 package dev.sanskar.fileboi.models;
 
-public class Files {
+public class FileEntry {
     private String id;
     private String name;
     private String createdAt;
@@ -49,7 +49,7 @@ public class Files {
 
     @Override
     public String toString() {
-        return "Files{" +
+        return "FileEntry{" +
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", createdAt='" + createdAt + '\'' +
