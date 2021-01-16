@@ -43,7 +43,7 @@ import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FilesAdapter;
-import dev.sanskar.fileboi.backend.FileboiAPI;
+import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.models.FileEntry;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
 import dev.sanskar.fileboi.utilities.Constants;

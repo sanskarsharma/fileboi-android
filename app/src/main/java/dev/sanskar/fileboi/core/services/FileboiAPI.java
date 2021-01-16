@@ -1,4 +1,4 @@
-package dev.sanskar.fileboi.backend;
+package dev.sanskar.fileboi.core.services;
 
 public class FileboiAPI {
 
