@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         filesViewModel = ViewModelProviders.of(this).get(FilesViewModel.class);
-        filesViewModel.getFiles().observe(this, new Observer<List<FileEntry>>() {
+        filesViewModel.getLiveData().observe(this, new Observer<List<FileEntry>>() {
             @Override
             public void onChanged(@Nullable List<FileEntry> fileEntryList) {
                 if (fileEntryList != null) {
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
 
-                filesViewModel.getFiles();
+                filesViewModel.getLiveData();
 
             }
         });
@@ -365,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // refreshing filesViewModel
-            filesViewModel.getFiles();
+            filesViewModel.getLiveData();
 
         }
     }

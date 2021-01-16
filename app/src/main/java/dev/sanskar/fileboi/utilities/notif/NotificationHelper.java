@@ -17,8 +17,8 @@ public class NotificationHelper extends ContextWrapper {
     public static final String CHANNEL_ONE_ID = "FILE_UPLOAD_NOTIF_CHANNEL";
     public static final String CHANNEL_ONE_NAME = "File uploads";
 
-    public NotificationHelper(Context base) {
-        super(base);
+    public NotificationHelper(Context context) {
+        super(context);
         createChannels();
     }
 

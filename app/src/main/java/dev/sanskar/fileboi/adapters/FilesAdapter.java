@@ -216,7 +216,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
                                                                                 });
 
                                                                                 // refresh list
-                                                                                filesViewModel.getFiles();
+                                                                                filesViewModel.getLiveData();
                                                                             }
 
                                                                             @Override
