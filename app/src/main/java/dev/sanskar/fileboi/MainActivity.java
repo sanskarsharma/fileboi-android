@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
-import dev.sanskar.fileboi.adapters.FilesAdapter;
+import dev.sanskar.fileboi.adapters.FileItemAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     SwipeRefreshLayout swipeRefreshLayout;
     FloatingActionButton fabBtnUploadFile;
     RecyclerView recyclerView;
-    FilesAdapter filesAdapter;
+    FileItemAdapter fileItemAdapter;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE = 1111;
@@ -121,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
                 if (fileItemList != null) {
-                    filesAdapter = new FilesAdapter(MainActivity.this, fileItemList);
-                    recyclerView.setAdapter(filesAdapter);
+                    fileItemAdapter = new FileItemAdapter(MainActivity.this, fileItemList);
+                    recyclerView.setAdapter(fileItemAdapter);
                 }
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);

@@ -48,9 +48,9 @@ import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 import dev.sanskar.fileboi.view_models.FilesViewModel;
 
-public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHolder> {
+public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesViewHolder> {
 
-    public static final String TAG = FilesAdapter.class.getSimpleName();
+    public static final String TAG = FileItemAdapter.class.getSimpleName();
     private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
 
     Context mCtx;
@@ -59,7 +59,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FilesViewHol
     // adding filesViewModel here so that we can call its methods for refreshing data list on operations like delete
     FilesViewModel filesViewModel ;
 
-    public FilesAdapter(Context mCtx, List<FileItem> fileItemList) {
+    public FileItemAdapter(Context mCtx, List<FileItem> fileItemList) {
         this.mCtx = mCtx;
         this.fileItemList = fileItemList;
         this.filesViewModel = ViewModelProviders.of((MainActivity) mCtx).get(FilesViewModel.class);
