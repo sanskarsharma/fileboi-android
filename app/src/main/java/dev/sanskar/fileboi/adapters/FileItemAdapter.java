@@ -21,7 +21,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -37,32 +36,34 @@ import com.google.firebase.auth.GetTokenResult;
 
 import java.util.List;
 
-import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.models.FileMetadata;
 import dev.sanskar.fileboi.core.schema.FileURLResponse;
 import dev.sanskar.fileboi.core.services.FilesAPIService;
+import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.ConversionUtils;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
-import dev.sanskar.fileboi.view_models.FileItemViewModel;
 
 public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesViewHolder> {
 
     public static final String TAG = FileItemAdapter.class.getSimpleName();
     private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
+    // todo : think of way to remove dependence of adapter on filesAPIService
 
     Context mCtx;
     List<FileItem> fileItemList;
 
-    // adding filesViewModel here so that we can call its methods for refreshing data list on operations like delete
-    FileItemViewModel filesViewModel ;
+    /*
+        note on adapter's role in MVVM patter :
+        - viewModel should not be accessed from here. changes should be made to data (repository) which the viewmodel will observe and
+        - view model will in-turn reflect the changes in repository to its LiveData - which Activity/Fragment is observing. hence changes reach Activity where we reset adapter on change
+     */
 
     public FileItemAdapter(Context mCtx, List<FileItem> fileItemList) {
         this.mCtx = mCtx;
         this.fileItemList = fileItemList;
-        this.filesViewModel = ViewModelProviders.of((MainActivity) mCtx).get(FileItemViewModel.class);
     }
 
 
@@ -216,7 +217,7 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesV
                                                                                 });
 
                                                                                 // refresh list
-                                                                                filesViewModel.getLiveData();
+                                                                                FileItemRepository.getInstance().triggerRefresh();
                                                                             }
 
                                                                             @Override

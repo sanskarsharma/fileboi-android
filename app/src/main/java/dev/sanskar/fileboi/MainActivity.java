@@ -46,6 +46,7 @@ import dev.sanskar.fileboi.adapters.FileItemAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
+import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
@@ -117,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         filesViewModel = ViewModelProviders.of(this).get(FileItemViewModel.class);
-        filesViewModel.getLiveData().observe(this, new Observer<List<FileItem>>() {
+        filesViewModel.getFileItems().observe(this, new Observer<List<FileItem>>() {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
                 if (fileItemList != null) {
@@ -135,10 +136,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
 
-                filesViewModel.getLiveData();
+                FileItemRepository.getInstance().triggerRefresh();
 
             }
         });
+
+        // loading items on init
+        FileItemRepository.getInstance().triggerRefresh();
 
 
         // Get intent for capturing share menu intents
@@ -365,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // refreshing filesViewModel
-            filesViewModel.getLiveData();
+            FileItemRepository.getInstance().triggerRefresh();
 
         }
     }
