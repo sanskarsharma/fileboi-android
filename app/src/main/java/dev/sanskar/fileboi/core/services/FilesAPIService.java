@@ -14,7 +14,7 @@ import retrofit2.http.Path;
 
 public interface FilesAPIService {
 
-    public static final String SERVICE_BASE_URL = "https://fileboi-rwac7a5nuq-de.a.run.app/fileboi/";
+    public static final String SERVICE_BASE_URL = "https://fileboi.sanskarsharma.com/fileboi/";
 
     @POST("files")
     Call<FileItem> createFile(@Header("Authorization") String authHeader, @Body FileItem file);
