@@ -57,4 +57,12 @@ public class FileItem {
                 ", extras=" + extras +
                 '}';
     }
+
+    public boolean isImage() {
+        return this.getName().endsWith(".jpeg") || this.getName().endsWith(".jpg") || this.getName().endsWith(".png") || this.getName().endsWith(".gif");
+    }
+
+    public boolean isVideo() {
+        return this.getName().endsWith(".mp4") || this.getName().endsWith(".3gp") ;
+    }
 }

@@ -80,13 +80,13 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyView
         final FileItem fileItem = fileItemList.get(position);
 
         int placeholderDrawableResource;
-        if (fileItem.getName().endsWith(".jpeg") || fileItem.getName().endsWith(".jpg") || fileItem.getName().endsWith(".png") || fileItem.getName().endsWith(".gif")) {
+        if (fileItem.isImage()) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_image;
             Log.e(TAG, fileItem.getExtras().getThumbnailUrl());
 
         } else if (fileItem.getName().endsWith(".pdf")) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_pdf;
-        } else if (fileItem.getName().endsWith(".mp4") || (fileItem.getName().endsWith(".3gp"))) {
+        } else if (fileItem.isVideo()) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_video;
         } else {
             placeholderDrawableResource = R.drawable.icons8_placeholder_file;
