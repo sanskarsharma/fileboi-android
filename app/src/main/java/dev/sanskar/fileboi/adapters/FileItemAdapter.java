@@ -46,7 +46,7 @@ import dev.sanskar.fileboi.utilities.ConversionUtils;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
 
-public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesViewHolder> {
+public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyViewHolder> {
 
     public static final String TAG = FileItemAdapter.class.getSimpleName();
     private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
@@ -69,13 +69,13 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesV
 
     @NonNull
     @Override
-    public FilesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mCtx).inflate(R.layout.files_entry_cardview_new, parent, false);
-        return new FilesViewHolder(view);
+        return new MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final FilesViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final MyViewHolder holder, int position) {
 
         final FileItem fileItem = fileItemList.get(position);
 
@@ -256,16 +256,16 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.FilesV
 
     @Override
     public int getItemCount() {
-        return fileItemList.size();
+        return fileItemList != null ? fileItemList.size() : 0 ;
     }
 
-    class FilesViewHolder extends RecyclerView.ViewHolder {
+    class MyViewHolder extends RecyclerView.ViewHolder {
 
         CardView cardView;
         TextView dateTimeTextView, itemNameTextView, shortInfoTextView;
         ImageView imageView;
 
-        public FilesViewHolder(View itemView) {
+        public MyViewHolder(View itemView) {
             super(itemView);
 
             cardView = itemView.findViewById(R.id.item_cardView_new);

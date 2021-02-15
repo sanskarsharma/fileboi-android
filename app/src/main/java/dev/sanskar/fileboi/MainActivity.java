@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -43,9 +44,10 @@ import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FileItemAdapter;
+import dev.sanskar.fileboi.adapters.FileItemGridAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
-import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
+import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
@@ -63,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
     SwipeRefreshLayout swipeRefreshLayout;
     FloatingActionButton fabBtnUploadFile;
     RecyclerView recyclerView;
-    FileItemAdapter fileItemAdapter;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE = 1111;
@@ -96,10 +97,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // setting view model to be used by UI / activity
+        filesViewModel = ViewModelProviders.of(this).get(FileItemViewModel.class);
 
+        // loading items on init
+        FileItemRepository.getInstance().triggerRefresh();
+
+        // binding recyclerview
         recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setHasFixedSize(true);
+
+        // setting list adapter as default adapter on creation ; todo : add preferences and then use that to set right value here
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+
+        // to hide floating button on scroll
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
@@ -116,14 +128,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-        filesViewModel = ViewModelProviders.of(this).get(FileItemViewModel.class);
+        // adding observer on viewmodel's livedata to reload UI on change
         filesViewModel.getFileItems().observe(this, new Observer<List<FileItem>>() {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
                 if (fileItemList != null) {
-                    fileItemAdapter = new FileItemAdapter(MainActivity.this, fileItemList);
-                    recyclerView.setAdapter(fileItemAdapter);
+                    // reloading data on UI with the set adapter ; todo : current way of checking for set adapter is hacky, use preferences
+                    if (recyclerView.getAdapter() instanceof FileItemAdapter) {
+                        recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, fileItemList));
+                    } else if (recyclerView.getAdapter() instanceof FileItemGridAdapter) {
+                        recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, fileItemList));
+                    }
                 }
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);
@@ -141,10 +156,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // loading items on init
-        FileItemRepository.getInstance().triggerRefresh();
-
-
         // Get intent for capturing share menu intents
         Intent incomingIntent = getIntent();
         // currently incoming intent can have any MimeType, there is no way to ensure whether it is a file or plain text
@@ -157,6 +168,19 @@ public class MainActivity extends AppCompatActivity {
             handleFileSelectionIntent(incomingIntent);
         }
 
+    }
+
+
+    public void toggleView() {
+        // todo : current way of checking for set adapter is hacky, use preferences
+        if (recyclerView.getAdapter() instanceof FileItemAdapter) {
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+            recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+
+        } else if (recyclerView.getAdapter() instanceof FileItemGridAdapter) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+        }
     }
 
     @Override
@@ -254,6 +278,9 @@ public class MainActivity extends AppCompatActivity {
                             finish();
                         }
                     });
+        }
+        else if (id == R.id.action_toggle_view) {
+            toggleView();
         }
         return super.onOptionsItemSelected(item);
     }
