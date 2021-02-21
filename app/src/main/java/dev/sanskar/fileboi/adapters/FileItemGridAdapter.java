@@ -1,6 +1,7 @@
 package dev.sanskar.fileboi.adapters;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -17,8 +19,10 @@ import com.bumptech.glide.request.RequestOptions;
 
 import java.util.List;
 
+import dev.sanskar.fileboi.MainActivity;
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.fragments.SlideshowDialogFragment;
 
 public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapter.MyViewHolder>{
 
@@ -31,7 +35,6 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
         this.fileItemList = fileItemList;
     }
 
-
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -42,7 +45,7 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull MyViewHolder holder, final int position) {
         final FileItem fileItem = fileItemList.get(position);
         int placeholderDrawableResource;
         if (fileItem.getName().endsWith(".jpeg") || fileItem.getName().endsWith(".jpg") || fileItem.getName().endsWith(".png") || fileItem.getName().endsWith(".gif")) {
@@ -67,6 +70,26 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
                 .apply(requestOptions)
                 .into(holder.squareImageView);
 
+
+        holder.squareImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                // casting context to MainActivity to call getSupportFragmentManager()
+                // fixme : can we remove reference of particular activity from here so that this adapter is not dependent on the activity which needs it ?
+                MainActivity mainActivity = (MainActivity) mCtx;
+                Bundle bundle = new Bundle();
+                bundle.putInt("position", position);
+
+                FragmentTransaction ft =  mainActivity.getSupportFragmentManager().beginTransaction();
+                SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
+                newFragment.setArguments(bundle);
+                newFragment.show(ft, "slideshow");
+
+            }
+        });
+
+
     }
 
     @Override
@@ -74,7 +97,7 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
         return fileItemList != null ? fileItemList.size() : 0 ;
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder {
+    static class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView squareImageView;
 
         public MyViewHolder(@NonNull View itemView) {

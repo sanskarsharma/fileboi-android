@@ -70,7 +70,7 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyView
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mCtx).inflate(R.layout.files_entry_cardview_new, parent, false);
+        View view = LayoutInflater.from(mCtx).inflate(R.layout.file_item_cardview, parent, false);
         return new MyViewHolder(view);
     }
 
@@ -259,7 +259,7 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyView
         return fileItemList != null ? fileItemList.size() : 0 ;
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder {
+    static class MyViewHolder extends RecyclerView.ViewHolder {
 
         CardView cardView;
         TextView dateTimeTextView, itemNameTextView, shortInfoTextView;
