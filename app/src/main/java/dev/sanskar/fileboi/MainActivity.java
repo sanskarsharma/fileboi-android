@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
 
         // checking view preference and setting view appropriately
-        showGridView = SharedPrefHelper.getBooleanData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED);
+        showGridView = SharedPrefHelper.getBooleanData(this, SharedPrefHelper.KEY_IS_GRID_VIEW_PREFERRED);
         setLayoutAndAdapter();
 
         // to hide floating button on scroll
@@ -177,11 +177,11 @@ public class MainActivity extends AppCompatActivity {
         if (showGridView) {
             recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
             recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
-            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED, true);
+            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_IS_GRID_VIEW_PREFERRED, true);
         } else {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
-            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED, false);
+            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_IS_GRID_VIEW_PREFERRED, false);
         }
     }
 

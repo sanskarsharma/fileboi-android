@@ -7,7 +7,8 @@ public class SharedPrefHelper {
 
     private static final String PREF_APP = "pref_app";
 
-    public static String KEY_GRID_VIEW_PREFERRED;
+    public static String KEY_IS_GRID_VIEW_PREFERRED = "KEY_IS_GRID_VIEW_PREFERRED";
+    public static String KEY_GET_FILES_API_RESPONSE_BODY = "KEY_GET_FILES_API_RESPONSE_BODY";
 
     /**
      * Gets boolean data.

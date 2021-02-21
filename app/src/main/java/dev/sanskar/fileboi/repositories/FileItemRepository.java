@@ -1,5 +1,7 @@
 package dev.sanskar.fileboi.repositories;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -9,12 +11,16 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.List;
 
+import dev.sanskar.fileboi.Fileboi;
 import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.services.FilesAPIService;
 import dev.sanskar.fileboi.utilities.HttpUtils;
+import dev.sanskar.fileboi.utilities.SharedPrefHelper;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -25,6 +31,7 @@ public class FileItemRepository {
     private MutableLiveData<List<FileItem>> mutableLiveData = new MutableLiveData<>();
     private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
 
+    static Gson gson = new Gson();
 
     public static FileItemRepository getInstance() {
         if (instance == null) {
@@ -43,6 +50,19 @@ public class FileItemRepository {
     }
 
     public void triggerRefresh() {
+
+        // loading data from saved preferences
+        Context context = Fileboi.getContext();
+        if (context != null){
+            String data = SharedPrefHelper.getStringData(context, SharedPrefHelper.KEY_GET_FILES_API_RESPONSE_BODY);
+            if (data != null){
+                List<FileItem> fileItems = gson.fromJson(data, new TypeToken<List<FileItem>>(){}.getType());
+                if (fileItems.size() > 0){
+                    mutableLiveData.postValue(fileItems);
+                }
+            }
+        }
+
         callLoadFiles();
     }
 
@@ -91,6 +111,11 @@ public class FileItemRepository {
             @Override
             public void onResponse(@NonNull Call<List<FileItem>> call, @NonNull Response<List<FileItem>> response) {
                 mutableLiveData.postValue(response.body());
+                SharedPrefHelper.saveData(
+                        Fileboi.getContext(),
+                        SharedPrefHelper.KEY_GET_FILES_API_RESPONSE_BODY,
+                        gson.toJson(response.body())
+                );
             }
 
             @Override
