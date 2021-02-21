@@ -52,6 +52,7 @@ import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
 import dev.sanskar.fileboi.utilities.HttpUtils;
+import dev.sanskar.fileboi.utilities.SharedPrefHelper;
 import dev.sanskar.fileboi.utilities.notif.NotificationHelper;
 import dev.sanskar.fileboi.view_models.FileItemViewModel;
 import okhttp3.MediaType;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1111;
     private boolean mIsPermissionGranted = true;
 
+    private boolean showGridView;
     FileItemViewModel filesViewModel;
 
     @Override
@@ -107,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setHasFixedSize(true);
 
-        // setting list adapter as default adapter on creation ; todo : add preferences and then use that to set right value here
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+        // checking view preference and setting view appropriately
+        showGridView = SharedPrefHelper.getBooleanData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED);
+        setLayoutAndAdapter();
 
         // to hide floating button on scroll
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -133,12 +135,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
                 if (fileItemList != null) {
-                    // reloading data on UI with the set adapter ; todo : current way of checking for set adapter is hacky, use preferences
-                    if (recyclerView.getAdapter() instanceof FileItemAdapter) {
-                        recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, fileItemList));
-                    } else if (recyclerView.getAdapter() instanceof FileItemGridAdapter) {
-                        recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, fileItemList));
-                    }
+                    setLayoutAndAdapter();
                 }
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);
@@ -171,15 +168,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void toggleView() {
-        // todo : current way of checking for set adapter is hacky, use preferences
-        if (recyclerView.getAdapter() instanceof FileItemAdapter) {
+    private void toggleView() {
+        showGridView = !showGridView;
+        setLayoutAndAdapter();
+    }
+
+    public void setLayoutAndAdapter() {
+        if (showGridView) {
             recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
             recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
-
-        } else if (recyclerView.getAdapter() instanceof FileItemGridAdapter) {
+            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED, true);
+        } else {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+            SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_GRID_VIEW_PREFERRED, false);
         }
     }
 
