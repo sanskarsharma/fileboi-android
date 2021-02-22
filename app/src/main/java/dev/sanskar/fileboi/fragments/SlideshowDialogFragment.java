@@ -12,19 +12,19 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.viewpager.widget.ViewPager;
 
 import java.util.List;
 
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.adapters.FileItemViewPagerAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.utilities.layout.ViewPagerFixed;
 import dev.sanskar.fileboi.view_models.FileItemViewModel;
 
 public class SlideshowDialogFragment extends DialogFragment {
     private String TAG = SlideshowDialogFragment.class.getSimpleName();
 
-    private ViewPager viewPager;
+    private ViewPagerFixed viewPagerFixed;
     private TextView lblCount, lblTitle, lblDate;
     private int selectedPosition = 0;
 
@@ -62,7 +62,7 @@ public class SlideshowDialogFragment extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.fragment_slideshow_dialog, container, false);
-        viewPager = (ViewPager) v.findViewById(R.id.viewpager);
+        viewPagerFixed = (ViewPagerFixed) v.findViewById(R.id.viewpager);
         lblCount = (TextView) v.findViewById(R.id.lbl_count);
         lblTitle = (TextView) v.findViewById(R.id.title);
         lblDate = (TextView) v.findViewById(R.id.date);
@@ -72,8 +72,8 @@ public class SlideshowDialogFragment extends DialogFragment {
         Log.e(TAG, "position: " + selectedPosition);
 
         FileItemViewPagerAdapter fileItemViewPagerAdapter = new FileItemViewPagerAdapter(getContext(), fileItems);
-        viewPager.setAdapter(fileItemViewPagerAdapter);
-        viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
+        viewPagerFixed.setAdapter(fileItemViewPagerAdapter);
+        viewPagerFixed.addOnPageChangeListener(viewPagerPageChangeListener);
 
         setCurrentItem(selectedPosition);
 
@@ -81,11 +81,11 @@ public class SlideshowDialogFragment extends DialogFragment {
     }
 
     private void setCurrentItem(int position) {
-        viewPager.setCurrentItem(position, false);
+        viewPagerFixed.setCurrentItem(position, false);
         displayMetaInfo(selectedPosition);
     }
 
-    ViewPager.OnPageChangeListener viewPagerPageChangeListener = new ViewPager.OnPageChangeListener() {
+    ViewPagerFixed.OnPageChangeListener viewPagerPageChangeListener = new ViewPagerFixed.OnPageChangeListener() {
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 

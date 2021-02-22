@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
         LayoutInflater layoutInflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = layoutInflater.inflate(R.layout.file_item_fullscreen_preview, container, false);
 
-        ImageView imageViewPreview = (ImageView) view.findViewById(R.id.image_preview);
+        PhotoView photoViewPreview = (PhotoView) view.findViewById(R.id.image_preview);
 
         FileItem fileItem = fileItems.get(position);
 
@@ -46,7 +47,7 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
             Glide.with(mCtx)
                     .load(fileItem.getExtras().getDownloadUrl())
                     .apply(requestOptions)
-                    .into(imageViewPreview);
+                    .into(photoViewPreview);
         }
 
         container.addView(view);
