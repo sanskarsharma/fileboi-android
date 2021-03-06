@@ -57,7 +57,7 @@ public class FileItemRepository {
             String data = SharedPrefHelper.getStringData(context, SharedPrefHelper.KEY_GET_FILES_API_RESPONSE_BODY);
             if (data != null){
                 List<FileItem> fileItems = gson.fromJson(data, new TypeToken<List<FileItem>>(){}.getType());
-                if (fileItems.size() > 0){
+                if (fileItems != null && fileItems.size() > 0){
                     mutableLiveData.postValue(fileItems);
                 }
             }
@@ -69,6 +69,9 @@ public class FileItemRepository {
     public void deleteFileItem(FileItem fileItem) {
         // todo : implement or remove
         // logic to make delete file api call and then update liveData (either re-fetch files OR delete entry from liveData)
+//        List<FileItem> fileItems = mutableLiveData.getValue();
+//        fileItems.remove(fileItem);
+//        mutableLiveData.postValue(fileItems);
     }
 
     public void createFileItem(FileItem fileItem) {
@@ -110,12 +113,15 @@ public class FileItemRepository {
         callGetFiles.enqueue(new Callback<List<FileItem>>() {
             @Override
             public void onResponse(@NonNull Call<List<FileItem>> call, @NonNull Response<List<FileItem>> response) {
-                mutableLiveData.postValue(response.body());
-                SharedPrefHelper.saveData(
-                        Fileboi.getContext(),
-                        SharedPrefHelper.KEY_GET_FILES_API_RESPONSE_BODY,
-                        gson.toJson(response.body())
-                );
+               if (response.body() != null) {
+                   mutableLiveData.postValue(response.body());
+                   SharedPrefHelper.saveData(
+                           Fileboi.getContext(),
+                           SharedPrefHelper.KEY_GET_FILES_API_RESPONSE_BODY,
+                           gson.toJson(response.body())
+                   );
+               }
+
             }
 
             @Override

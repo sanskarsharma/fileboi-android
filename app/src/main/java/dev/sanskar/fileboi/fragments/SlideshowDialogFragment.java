@@ -1,11 +1,12 @@
 package dev.sanskar.fileboi.fragments;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +19,7 @@ import java.util.List;
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.adapters.FileItemViewPagerAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.layout.ViewPagerFixed;
 import dev.sanskar.fileboi.view_models.FileItemViewModel;
 
@@ -26,9 +28,13 @@ public class SlideshowDialogFragment extends DialogFragment {
 
     private ViewPagerFixed viewPagerFixed;
     private TextView lblCount, lblTitle, lblDate;
+    private ImageButton imageButtonShare ;
     private int selectedPosition = 0;
 
     private FileItemViewModel fileItemViewModel;
+    private FileItemRepository fileItemRepository = FileItemRepository.getInstance();
+
+    private FileItemViewPagerAdapter fileItemViewPagerAdapter;
     private List<FileItem> fileItems;
 
     public static SlideshowDialogFragment newInstance() {
@@ -40,15 +46,22 @@ public class SlideshowDialogFragment extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        fileItemViewModel = ViewModelProviders.of(this).get(FileItemViewModel.class);
+        fileItemViewModel = ViewModelProviders.of(requireActivity()).get(FileItemViewModel.class);
 
-        // get data list from ViewModel and observe for changes
+        // get data list from ViewModel, attach to adapter, and observe for changes
         fileItems = fileItemViewModel.getFileItems().getValue();
+        fileItemViewPagerAdapter = new FileItemViewPagerAdapter(getContext(), fileItems);
+
         fileItemViewModel.getFileItems().observe(this, new Observer<List<FileItem>>() {
             @Override
             public void onChanged(@Nullable List<FileItem> fileItemList) {
+
+                // onChanged is call everytime viewpager is opened ; not an issue here, but good to note when adding more logic inside it
+                // read : https://blog.usejournal.com/observe-livedata-from-viewmodel-in-fragment-fd7d14f9f5fb
+
                 if (fileItemList != null) {
                     fileItems = fileItemList;
+                    fileItemViewPagerAdapter.notifyDataSetChanged();
                 }
 
             }
@@ -67,22 +80,23 @@ public class SlideshowDialogFragment extends DialogFragment {
         lblTitle = (TextView) v.findViewById(R.id.title);
         lblDate = (TextView) v.findViewById(R.id.date);
 
-        selectedPosition = getArguments().getInt("position");
+        imageButtonShare = (ImageButton) v.findViewById(R.id.imageButtonShare);
+        imageButtonShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FileItem fileItem = fileItems.get(selectedPosition);
+                Toast.makeText(getContext(),"Share " + fileItems.get(selectedPosition).getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
-        Log.e(TAG, "position: " + selectedPosition);
-
-        FileItemViewPagerAdapter fileItemViewPagerAdapter = new FileItemViewPagerAdapter(getContext(), fileItems);
         viewPagerFixed.setAdapter(fileItemViewPagerAdapter);
         viewPagerFixed.addOnPageChangeListener(viewPagerPageChangeListener);
 
-        setCurrentItem(selectedPosition);
+        selectedPosition = getArguments().getInt("position");
+        viewPagerFixed.setCurrentItem(selectedPosition, false);
+        displayMetaInfo(selectedPosition);
 
         return v;
-    }
-
-    private void setCurrentItem(int position) {
-        viewPagerFixed.setCurrentItem(position, false);
-        displayMetaInfo(selectedPosition);
     }
 
     ViewPagerFixed.OnPageChangeListener viewPagerPageChangeListener = new ViewPagerFixed.OnPageChangeListener() {
@@ -93,6 +107,7 @@ public class SlideshowDialogFragment extends DialogFragment {
 
         @Override
         public void onPageSelected(int position) {
+            selectedPosition = position;
             displayMetaInfo(position);
         }
 
@@ -103,7 +118,7 @@ public class SlideshowDialogFragment extends DialogFragment {
     };
 
     private void displayMetaInfo(int position) {
-        lblCount.setText((position + 1) + " of " + fileItems.size());
+        // lblCount.setText((position + 1) + " of " + fileItems.size());
         FileItem fileItem = fileItems.get(position);
         lblTitle.setText(fileItem.getName());
         lblDate.setText(fileItem.getCreatedAt());

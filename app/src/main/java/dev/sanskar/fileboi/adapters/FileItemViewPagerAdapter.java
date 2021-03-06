@@ -1,10 +1,10 @@
 package dev.sanskar.fileboi.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
@@ -21,6 +21,8 @@ import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.core.models.FileItem;
 
 public class FileItemViewPagerAdapter extends PagerAdapter {
+
+    private String TAG = this.getClass().getSimpleName();
 
     Context mCtx;
     List<FileItem> fileItems;
@@ -39,6 +41,7 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
         PhotoView photoViewPreview = (PhotoView) view.findViewById(R.id.image_preview);
 
         FileItem fileItem = fileItems.get(position);
+        Log.d(TAG, "instantiated : " + fileItem.getName() + "for position" + String.valueOf(position));
 
         if (fileItem.isImage()) {
             RequestOptions requestOptions = new RequestOptions()
