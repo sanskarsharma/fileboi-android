@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -44,10 +45,14 @@ import java.util.Random;
 
 import dev.sanskar.fileboi.activities.LoginActivity;
 import dev.sanskar.fileboi.adapters.FileItemAdapter;
+import dev.sanskar.fileboi.adapters.FileItemClickListener;
 import dev.sanskar.fileboi.adapters.FileItemGridAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.core.schema.FileURLResponse;
 import dev.sanskar.fileboi.core.schema.UploadTaskResult;
 import dev.sanskar.fileboi.core.services.FileboiAPI;
+import dev.sanskar.fileboi.core.services.FilesAPIService;
+import dev.sanskar.fileboi.fragments.SlideshowDialogFragment;
 import dev.sanskar.fileboi.repositories.FileItemRepository;
 import dev.sanskar.fileboi.utilities.Constants;
 import dev.sanskar.fileboi.utilities.FileUploadUtils;
@@ -61,7 +66,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FileItemClickListener {
 
     SwipeRefreshLayout swipeRefreshLayout;
     FloatingActionButton fabBtnUploadFile;
@@ -73,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean showGridView;
     FileItemViewModel filesViewModel;
+
+    private FilesAPIService filesAPIService = HttpUtils.getRetrofitInstance(FilesAPIService.SERVICE_BASE_URL).create(FilesAPIService.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,11 +183,11 @@ public class MainActivity extends AppCompatActivity {
     public void setLayoutAndAdapter() {
         if (showGridView) {
             recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-            recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+            recyclerView.setAdapter(new FileItemGridAdapter(MainActivity.this, filesViewModel.getFileItems().getValue(), this));
             SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_IS_GRID_VIEW_PREFERRED, true);
         } else {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue()));
+            recyclerView.setAdapter(new FileItemAdapter(MainActivity.this, filesViewModel.getFileItems().getValue(), this));
             SharedPrefHelper.saveData(this, SharedPrefHelper.KEY_IS_GRID_VIEW_PREFERRED, false);
         }
     }
@@ -287,7 +294,122 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onViewButtonClick(FileItem selectedItem, int position, View view) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("position", position);
 
+        FragmentTransaction ft =  getSupportFragmentManager().beginTransaction();
+        SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
+        newFragment.setArguments(bundle);
+        newFragment.show(ft, "slideshow");
+    }
+
+    @Override
+    public void onShareButtonClick(FileItem selectedItem, int position, View view) {
+        Toast.makeText(this,"Downloading " + selectedItem.getName() + " ...", Toast.LENGTH_SHORT).show();
+        downloadFile(selectedItem);
+    }
+
+    @Override
+    public void onDeleteButtonClick(FileItem selectedItem, int position, View view) {
+        deleteFile(selectedItem);
+    }
+
+    private void downloadFile(final FileItem fileItem){
+
+        FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (mUser != null) {
+            mUser.getIdToken(true)
+                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                        public void onComplete(@NonNull Task<GetTokenResult> task) {
+                            if (task.isSuccessful()) {
+                                String idToken = task.getResult().getToken();
+
+                                retrofit2.Call<FileURLResponse> getFileDownloadUrl = filesAPIService.getFileDownloadUrl("Bearer " + idToken, fileItem.getId());
+                                getFileDownloadUrl.enqueue(new retrofit2.Callback<FileURLResponse>() {
+                                    @Override
+                                    public void onResponse(retrofit2.Call<FileURLResponse> call, retrofit2.Response<FileURLResponse> response) {
+                                        // open download URL in browser
+                                        FileURLResponse fileURLResponse = response.body();
+                                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(fileURLResponse.getUrl()));
+                                        startActivity(browserIntent);
+                                    }
+
+                                    @Override
+                                    public void onFailure(retrofit2.Call<FileURLResponse> call, Throwable t) {
+
+                                    }
+                                });
+
+                            } else {
+                                // failed to fetch token from firebase
+                                // Handle error -> task.getException();
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void deleteFile(final FileItem fileItem) {
+        MaterialAlertDialogBuilder deleteConfirmDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(fileItem.getName())
+                .setMessage("Are you sure you want to delete this file from cloud storage ?")
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                })
+                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        FirebaseUser mUser = FirebaseAuth.getInstance().getCurrentUser();
+                        if (mUser != null) {
+                            mUser.getIdToken(true)
+                                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                                        public void onComplete(@NonNull Task<GetTokenResult> task) {
+                                            if (task.isSuccessful()) {
+                                                String idToken = task.getResult().getToken();
+
+                                                retrofit2.Call<FileItem> deleteFile = filesAPIService.deleteFile("Bearer " + idToken, fileItem.getId());
+                                                deleteFile.enqueue(new retrofit2.Callback<FileItem>() {
+                                                    @Override
+                                                    public void onResponse(retrofit2.Call<FileItem> call, retrofit2.Response<FileItem> response) {
+
+                                                        // show toast message for file deleted
+                                                        final FileItem deletedFileItem = response.body();
+//                                                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                                                            @Override
+//                                                            public void run() {
+//                                                                Toast.makeText(mCtx, "Deleted \n" + deletedFileItem.getName(), Toast.LENGTH_SHORT).show();
+//                                                            }
+//                                                        });
+                                                        Toast.makeText(MainActivity.this, "Deleted \n" + deletedFileItem.getName(), Toast.LENGTH_SHORT).show();
+
+                                                        // refresh list
+                                                        FileItemRepository.getInstance().triggerRefresh();
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(retrofit2.Call<FileItem> call, Throwable t) {
+                                                        // failed to delete file, api call failed
+                                                    }
+                                                });
+
+                                            } else {
+                                                // failed to fetch token from firebase
+                                                // Handle error -> task.getException();
+                                            }
+                                        }
+                                    });
+                        }
+
+                    }
+                })
+                ;
+        deleteConfirmDialog.show();
+    }
 
 
     private class UploadTask extends AsyncTask<String, Void, UploadTaskResult> {

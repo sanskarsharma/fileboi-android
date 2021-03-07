@@ -12,4 +12,11 @@
         android:orderInCategory="100"
         android:title="Toggle View"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_play_video"
+        android:orderInCategory="100"
+        android:title="Play Video"
+        app:showAsAction="never" />
+
 </menu>
