@@ -1,5 +1,9 @@
 package dev.sanskar.fileboi.fragments;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -85,7 +89,12 @@ public class SlideshowDialogFragment extends DialogFragment {
             @Override
             public void onClick(View view) {
                 FileItem fileItem = fileItems.get(selectedPosition);
-                Toast.makeText(getContext(),"Share " + fileItems.get(selectedPosition).getName(), Toast.LENGTH_SHORT).show();
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, "Here is a file for you  : " + fileItem.getExtras().getDownloadUrl());
+                sendIntent.setType("text/plain");
+                Intent shareIntent = Intent.createChooser(sendIntent, null);
+                startActivity(shareIntent);
             }
         });
 
