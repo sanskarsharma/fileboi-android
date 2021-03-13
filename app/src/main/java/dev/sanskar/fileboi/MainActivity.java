@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
                             // clearing required shared prefs
                             SharedPrefHelper.executeLogout(getApplicationContext());
 
-
+                            // clear image cache ; fixme : this does not release cache memory
                             clearGlideCache();
 
                             // user is now signed out
@@ -310,17 +310,11 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
                             finish();
                         }
                     });
-
-
-
         }
         else if (id == R.id.action_toggle_view) {
             toggleView();
         }
         return super.onOptionsItemSelected(item);
-
-
-
     }
 
     @Override

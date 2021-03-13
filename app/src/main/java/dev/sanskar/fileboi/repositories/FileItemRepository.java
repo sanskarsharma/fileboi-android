@@ -1,7 +1,6 @@
 package dev.sanskar.fileboi.repositories;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -60,7 +59,6 @@ public class FileItemRepository {
                 List<FileItem> fileItems = gson.fromJson(data, new TypeToken<List<FileItem>>(){}.getType());
                 if (fileItems != null && fileItems.size() > 0){
                     mutableLiveData.postValue(fileItems);
-                    Log.e("MLD", fileItems.get(0).toString());
                 }
             }
         }
