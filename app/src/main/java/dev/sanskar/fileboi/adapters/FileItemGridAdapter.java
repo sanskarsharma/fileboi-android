@@ -1,6 +1,8 @@
 package dev.sanskar.fileboi.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,15 +48,17 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, final int position) {
         final FileItem fileItem = fileItemList.get(position);
+        holder.playBtnImageView.setVisibility(View.GONE);
+
         int placeholderDrawableResource;
-        if (fileItem.getName().endsWith(".jpeg") || fileItem.getName().endsWith(".jpg") || fileItem.getName().endsWith(".png") || fileItem.getName().endsWith(".gif")) {
+        if (fileItem.isImage()) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_image;
             Log.e(TAG, fileItem.getExtras().getThumbnailUrl());
-
         } else if (fileItem.getName().endsWith(".pdf")) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_pdf;
-        } else if (fileItem.getName().endsWith(".mp4") || (fileItem.getName().endsWith(".3gp"))) {
+        } else if (fileItem.isVideo()) {
             placeholderDrawableResource = R.drawable.icons8_placeholder_video;
+            holder.playBtnImageView.setVisibility(View.VISIBLE);
         } else {
             placeholderDrawableResource = R.drawable.icons8_placeholder_file;
         }
@@ -80,10 +84,12 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
 
     class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView squareImageView;
-
+        ImageView playBtnImageView;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             squareImageView = itemView.findViewById(R.id.grid_square_image_view);
+            playBtnImageView = itemView.findViewById(R.id.grid_square_play_imageview);
+
             squareImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

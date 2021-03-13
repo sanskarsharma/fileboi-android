@@ -13,6 +13,16 @@
         android:padding="2dp"
         android:scaleType="centerCrop" />
 
+    <ImageView
+        android:id="@+id/grid_square_play_imageview"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerInParent="true"
+        android:scaleType="centerCrop"
+        android:background="@color/fui_transparent"
+        android:src="@drawable/exo_icon_play"
+       />
+
 <!--    <TextView-->
 <!--        android:id="@+id/grid_square_text_view"-->
 <!--        android:layout_width="wrap_content"-->
