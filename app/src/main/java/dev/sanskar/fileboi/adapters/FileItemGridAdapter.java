@@ -19,6 +19,7 @@ import java.util.List;
 
 import dev.sanskar.fileboi.R;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.utilities.GlideUrlWithCustomCacheKey;
 
 public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapter.MyViewHolder>{
 
@@ -64,7 +65,9 @@ public class FileItemGridAdapter extends RecyclerView.Adapter<FileItemGridAdapte
                 .priority(Priority.HIGH);
 
         Glide.with(mCtx)
-                .load(fileItem.getExtras().getThumbnailUrl())
+                .load(
+                        new GlideUrlWithCustomCacheKey(fileItem.getExtras().getThumbnailUrl(), fileItem.getId())
+                )
                 .apply(requestOptions)
                 .into(holder.squareImageView);
 

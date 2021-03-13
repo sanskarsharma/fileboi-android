@@ -29,6 +29,7 @@ import dev.sanskar.fileboi.core.models.FileItem;
 import dev.sanskar.fileboi.core.models.FileMetadata;
 import dev.sanskar.fileboi.utilities.ConversionUtils;
 import dev.sanskar.fileboi.utilities.DateTimeUtils;
+import dev.sanskar.fileboi.utilities.GlideUrlWithCustomCacheKey;
 
 public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyViewHolder> {
 
@@ -83,7 +84,9 @@ public class FileItemAdapter extends RecyclerView.Adapter<FileItemAdapter.MyView
                 .priority(Priority.HIGH);
 
         Glide.with(mCtx)
-                .load(fileItem.getExtras().getThumbnailUrl())
+                .load(
+                        new GlideUrlWithCustomCacheKey(fileItem.getExtras().getThumbnailUrl(), fileItem.getId())
+                )
                 .apply(requestOptions)
                 .into(holder.imageView);
 
