@@ -6,7 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
@@ -15,7 +15,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.github.chrisbanes.photoview.OnPhotoTapListener;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.List;
@@ -45,10 +44,8 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
         PhotoView photoViewPreview = (PhotoView) view.findViewById(R.id.image_preview);
         photoViewPreview.setZoomable(true);
 
-        PhotoView playBtnPhotoView = (PhotoView) view.findViewById(R.id.play_btn);
+        ImageButton playBtnPhotoView = (ImageButton) view.findViewById(R.id.play_btn);
         playBtnPhotoView.setVisibility(View.GONE);
-        // playBtnPhotoView.setZoomable(false); setting this prevents onTapListener from capturing taps/clicks -- used for play action
-
 
         final FileItem fileItem = fileItems.get(position);
         Log.d(TAG, "instantiated : " + fileItem.getName() + "for position" + String.valueOf(position));
@@ -71,16 +68,15 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
             playBtnPhotoView.setVisibility(View.VISIBLE);
         }
 
-        playBtnPhotoView.setOnPhotoTapListener(new OnPhotoTapListener() {
+        playBtnPhotoView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onPhotoTap(ImageView view, float x, float y) {
+            public void onClick(View view) {
                 Intent intent = new Intent(mCtx, PlayerActivity.class);
                 intent.putExtra("download_url", fileItem.getExtras().getDownloadUrl());
 
                 mCtx.startActivity(intent);
             }
         });
-
 
         container.addView(view);
 

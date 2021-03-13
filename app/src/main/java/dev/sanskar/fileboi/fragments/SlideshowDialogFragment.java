@@ -121,7 +121,6 @@ public class SlideshowDialogFragment extends DialogFragment {
         // lblCount.setText((position + 1) + " of " + fileItems.size());
         FileItem fileItem = fileItems.get(position);
         lblTitle.setText(fileItem.getName());
-        lblDate.setText(fileItem.getCreatedAt());
     }
 
 }

@@ -19,12 +19,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.github.chrisbanes.photoview.PhotoView
+    <ImageButton
         android:id="@+id/play_btn"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_centerInParent="true"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
+        android:background="@color/fui_transparent"
         android:src="@drawable/exo_styled_controls_play"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
