@@ -1,10 +1,12 @@
 package dev.sanskar.fileboi.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
@@ -13,11 +15,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.github.chrisbanes.photoview.OnPhotoTapListener;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.List;
 
 import dev.sanskar.fileboi.R;
+import dev.sanskar.fileboi.activities.PlayerActivity;
 import dev.sanskar.fileboi.core.models.FileItem;
 
 public class FileItemViewPagerAdapter extends PagerAdapter {
@@ -39,19 +43,44 @@ public class FileItemViewPagerAdapter extends PagerAdapter {
         View view = layoutInflater.inflate(R.layout.file_item_fullscreen_preview, container, false);
 
         PhotoView photoViewPreview = (PhotoView) view.findViewById(R.id.image_preview);
+        photoViewPreview.setZoomable(true);
 
-        FileItem fileItem = fileItems.get(position);
+        PhotoView playBtnPhotoView = (PhotoView) view.findViewById(R.id.play_btn);
+        playBtnPhotoView.setVisibility(View.GONE);
+        // playBtnPhotoView.setZoomable(false); setting this prevents onTapListener from capturing taps/clicks -- used for play action
+
+
+        final FileItem fileItem = fileItems.get(position);
         Log.d(TAG, "instantiated : " + fileItem.getName() + "for position" + String.valueOf(position));
 
+        RequestOptions requestOptions = new RequestOptions()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .priority(Priority.HIGH);
         if (fileItem.isImage()) {
-            RequestOptions requestOptions = new RequestOptions()
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .priority(Priority.HIGH);
+            photoViewPreview.setZoomable(true);
             Glide.with(mCtx)
                     .load(fileItem.getExtras().getDownloadUrl())
                     .apply(requestOptions)
                     .into(photoViewPreview);
+        } else if (fileItem.isVideo()) {
+            Glide.with(mCtx)
+                    .load(fileItem.getExtras().getThumbnailUrl())
+                    .apply(requestOptions)
+                    .into(photoViewPreview);
+            photoViewPreview.setZoomable(false);
+            playBtnPhotoView.setVisibility(View.VISIBLE);
         }
+
+        playBtnPhotoView.setOnPhotoTapListener(new OnPhotoTapListener() {
+            @Override
+            public void onPhotoTap(ImageView view, float x, float y) {
+                Intent intent = new Intent(mCtx, PlayerActivity.class);
+                intent.putExtra("download_url", fileItem.getExtras().getDownloadUrl());
+
+                mCtx.startActivity(intent);
+            }
+        });
+
 
         container.addView(view);
 

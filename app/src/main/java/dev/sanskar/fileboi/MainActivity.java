@@ -1,6 +1,7 @@
 package dev.sanskar.fileboi;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -274,6 +276,20 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
         return super.onCreateOptionsMenu(menu);
     }
 
+
+    @SuppressLint("StaticFieldLeak")
+    private void clearGlideCache() {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                Glide.get(getApplicationContext()).clearDiskCache();
+                Glide.get(getApplicationContext()).clearMemory();
+
+                return null;
+            }
+        } ;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -282,16 +298,29 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
                     .signOut(getApplicationContext())
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         public void onComplete(@NonNull Task<Void> task) {
+
+                            // clearing required shared prefs
+                            SharedPrefHelper.executeLogout(getApplicationContext());
+
+
+                            clearGlideCache();
+
                             // user is now signed out
                             startActivity(new Intent(MainActivity.this, LoginActivity.class));
                             finish();
                         }
                     });
+
+
+
         }
         else if (id == R.id.action_toggle_view) {
             toggleView();
         }
         return super.onOptionsItemSelected(item);
+
+
+
     }
 
     @Override

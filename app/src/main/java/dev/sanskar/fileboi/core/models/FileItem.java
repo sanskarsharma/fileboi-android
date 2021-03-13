@@ -63,6 +63,6 @@ public class FileItem {
     }
 
     public boolean isVideo() {
-        return this.getName().endsWith(".mp4") || this.getName().endsWith(".3gp") ;
+        return this.getName().endsWith(".mp4") || this.getName().endsWith(".3gp") || this.getName().endsWith(".webm") || this.getName().endsWith(".avi") || this.getName().endsWith(".mov");
     }
 }
