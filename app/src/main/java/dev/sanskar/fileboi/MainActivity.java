@@ -38,9 +38,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
 
-import org.json.JSONObject;
-
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -50,9 +49,8 @@ import dev.sanskar.fileboi.adapters.FileItemAdapter;
 import dev.sanskar.fileboi.adapters.FileItemClickListener;
 import dev.sanskar.fileboi.adapters.FileItemGridAdapter;
 import dev.sanskar.fileboi.core.models.FileItem;
+import dev.sanskar.fileboi.core.schema.BulkUploadTaskResult;
 import dev.sanskar.fileboi.core.schema.FileURLResponse;
-import dev.sanskar.fileboi.core.schema.UploadTaskResult;
-import dev.sanskar.fileboi.core.services.FileboiAPI;
 import dev.sanskar.fileboi.core.services.FilesAPIService;
 import dev.sanskar.fileboi.fragments.SlideshowDialogFragment;
 import dev.sanskar.fileboi.repositories.FileItemRepository;
@@ -66,6 +64,7 @@ import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import retrofit2.Call;
 
 
 public class MainActivity extends AppCompatActivity implements FileItemClickListener {
@@ -217,12 +216,18 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
                             if (task.isSuccessful()) {
                                 String idToken = task.getResult().getToken();
 
+                                // adding token in arrayList as UploadTask accepts list of string ;
+                                ArrayList<String> authToken = new ArrayList<String>();
+                                authToken.add(idToken);
+
+                                ArrayList<String> imagePathList = new ArrayList<String>();
                                 for (Uri uri : uriList) {  // TODO : instead of looping here, pass the list and make appropriate changes in UploadTask to handle it. This way, multiple files would be uploaded serially in order instead of all at once
                                     String imagePath = FileUploadUtils.getPath(context, uri);
-
-                                    // using THREAD_POOL_EXECUTOR for running multiple parallel executions
-                                    new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePath, idToken);
+                                    imagePathList.add(imagePath);
                                 }
+                                // using THREAD_POOL_EXECUTOR for running multiple parallel executions
+                                new UploadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imagePathList, authToken);
+
 
                             } else {
                                 // Handle error -> task.getException();
@@ -435,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
     }
 
 
-    private class UploadTask extends AsyncTask<String, Void, UploadTaskResult> {
+    private class UploadTask extends AsyncTask<ArrayList<String>, Void, BulkUploadTaskResult> {
 
         NotificationHelper notificationHelper = new NotificationHelper(MainActivity.this);
 
@@ -445,101 +450,120 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
         }
 
         @Override
-        protected UploadTaskResult doInBackground(String... params) {
+        protected BulkUploadTaskResult doInBackground(ArrayList<String>... params) {
 
-            int randomInt = new Random().nextInt(999999);
-            String [] namesplit = params[0].split("/");
-            String name = namesplit[namesplit.length-1];
+            ArrayList<String> filePaths = params[0];
+            String idToken = params[1].get(0);
 
-            UploadTaskResult uploadTaskResult = new UploadTaskResult(randomInt, name, false);
+            int notificationId = new Random().nextInt(999999);
+            BulkUploadTaskResult bulkUploadTaskResult = new BulkUploadTaskResult(
+                    notificationId,
+                    filePaths,
+                    false
+            );
 
             // starting upload notification
             NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
-            notification.setContentTitle("Uploading file");
-            notification.setContentText(name);
-            notification.setProgress(100, 0, true);
-            notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
+            notification.setContentTitle("Uploading "+ String.valueOf(filePaths.size()) +" files");
+            notification.setStyle(
+                    new NotificationCompat.BigTextStyle().bigText("Starting upload ...")
+            );
+            notification.setProgress(filePaths.size(), 0, false);
+            notificationHelper.notify(notificationId, notification);
 
-            try {
+            // initialise and set bulkUploadTaskResult default values
+            final List<String> successfulUploads = new ArrayList<String>();
+            bulkUploadTaskResult.setSuccessfulUploads(successfulUploads);
+            final List<String> failedUploads = new ArrayList<String>();
+            bulkUploadTaskResult.setFailedUploads(failedUploads);
 
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("name", name);
+            int count = 0;
+            for (final String filePath : filePaths) {
+                String [] namesplit = filePath.split("/");
+                final String name = namesplit[namesplit.length-1];
 
-                // create entry
-                Request getUrlRequest = new Request.Builder()
-                        .url(FileboiAPI.FILES_URL)
-                        .post(RequestBody.create(MediaType.parse("application/json"), jsonObject.toString()))
-                        .header("Authorization", "Bearer " + params[1])
-                        .build();
+                // update upload notification
+                notification.setContentTitle("Uploading " + String.valueOf(count) + " of " + String.valueOf(filePaths.size()) +" files");
+                notification.setStyle(
+                        new NotificationCompat.BigTextStyle().bigText("Uploading " + name)
+                );
+                notification.setProgress(filePaths.size(), count++, false);
+                notificationHelper.notify(notificationId, notification);
 
-                Response getUrlResponse = HttpUtils.getHttpClient().newCall(getUrlRequest).execute();
-                if (!getUrlResponse.isSuccessful()){
-                    Log.e(TAG, String.valueOf(getUrlResponse.code()));
-                    uploadTaskResult.setSuccess(false);
-                    return uploadTaskResult;
+                // create FileItem object to use as request body for POST call
+                FileItem fileItem = new FileItem();
+                fileItem.setName(name);
+
+                // call API [POST] to add FileItem entry
+                Call<FileItem> createFileCall = filesAPIService.createFile("Bearer " + idToken,fileItem);
+                retrofit2.Response<FileItem> createFileResponse = null;
+                try {
+                     createFileResponse = createFileCall.execute();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                String responseJsonString = getUrlResponse.body().string();
-                JSONObject getUrlResponseJson = new JSONObject(responseJsonString);
-                String fileId = getUrlResponseJson.getString("id");
+                if (createFileResponse != null && createFileResponse.isSuccessful()) {
+                    FileItem createdFileItem = createFileResponse.body();
+                    // call API [PUT] to upload file using upload_url
+                    Request uploadFileRequest = new Request.Builder()
+                            .url(createdFileItem.getExtras().getUploadUrl())
+                            .put(RequestBody.create(MediaType.parse(""), new File(filePath)))
+                            .build();
 
-                // get upload url of entry
-                Request getUploadUrlRequest = new Request.Builder()
-                        .url(FileboiAPI.getFileUploadURL(fileId))
-                        .get()
-                        .header("Authorization", "Bearer " + params[1])
-                        .build();
-                Response getUploadUrlResponse = HttpUtils.getHttpClient().newCall(getUploadUrlRequest).execute();
-                if (!getUploadUrlResponse.isSuccessful()){
-                    Log.e(TAG, String.valueOf(getUploadUrlResponse.code()));
-                    uploadTaskResult.setSuccess(false);
-                    return uploadTaskResult;
+                    Response uploadCallResponse = null;
+                    try {
+                        uploadCallResponse = HttpUtils.getHttpClient().newCall(uploadFileRequest).execute();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (uploadCallResponse != null && uploadCallResponse.isSuccessful()) {
+                        // add to successful uploads
+                        successfulUploads.add(name);
+                    } else {
+                        // add to failed uploads
+                        failedUploads.add(name);
+                    }
+                } else {
+                    // add to failed uploads
+                    failedUploads.add(name);
                 }
-                String respJsonStr = getUploadUrlResponse.body().string();
-                JSONObject uploadurlresp = new JSONObject(respJsonStr);
-                String uploadUrl = uploadurlresp.getString("url");
+            }
 
-                // Upload file to s3.
-                String imagePath = params[0];
-                Request uploadFileRequest = new Request.Builder()
-                        .url(uploadUrl)
-                        .put(RequestBody.create(MediaType.parse(""), new File(imagePath)))
-                        .build();
-                Response uploadResponse = HttpUtils.getHttpClient().newCall(uploadFileRequest).execute();
-                if (!uploadResponse.isSuccessful()){
-                    Log.e(TAG, String.valueOf(uploadResponse.code()));
-                    uploadTaskResult.setSuccess(false);
-                    return uploadTaskResult;
-                }
+            bulkUploadTaskResult.setSuccess(bulkUploadTaskResult.getFailedUploads().size() <= 0);
+            bulkUploadTaskResult.setSuccessfulUploads(successfulUploads);
+            bulkUploadTaskResult.setFailedUploads(failedUploads);
 
-                uploadTaskResult.setSuccess(true);
-                return uploadTaskResult;
-
-            } catch (Exception e) {
-                Log.e(TAG, e.getMessage());
-
-                uploadTaskResult.setSuccess(false);
-                return uploadTaskResult;            }
+            return bulkUploadTaskResult;
         }
 
         @Override
-        protected void onPostExecute(UploadTaskResult uploadTaskResult) {
-            super.onPostExecute(uploadTaskResult);
+        protected void onPostExecute(BulkUploadTaskResult bulkUploadTaskResult) {
+            super.onPostExecute(bulkUploadTaskResult);
 
-            if (uploadTaskResult.isSuccess()) {
+
+            if (bulkUploadTaskResult.isSuccess()) {
                 NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
                 notification.setContentTitle("Upload complete");
-                notification.setContentText(uploadTaskResult.getObjectName());
+                notification.setStyle(
+                        new NotificationCompat.BigTextStyle().bigText(
+                                "Uploaded " + String.valueOf(bulkUploadTaskResult.getSuccessfulUploads().size()) + " files"
+                        )
+                );
+                //notification.setProgress(bulkUploadTaskResult.getFileNames().size(), bulkUploadTaskResult.getFileNames().size(), false);
                 notification.setProgress(0, 0, false);
-                notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
+                notificationHelper.notify(bulkUploadTaskResult.getNotificationId(), notification);
 
             } else {
                 Log.e(TAG, "UploadTask failed");
                 NotificationCompat.Builder notification = notificationHelper.getFileUploadNotification();
-                notification.setContentTitle("Upload failed");
-                notification.setContentText("Failed to upload " + uploadTaskResult.getObjectName() + ".\n Please try again. Make sure internet is accessible");
-
+                notification.setContentTitle("Some files were not uploaded successfully !!");
+                notification.setStyle(
+                        new NotificationCompat.BigTextStyle().bigText(
+                                "Failed to upload " + String.valueOf(bulkUploadTaskResult.getFailedUploads().size()) + " of total " +  String.valueOf(bulkUploadTaskResult.getFileNames().size()) +" files"
+                        )
+                );
                 notification.setProgress(0, 0, false);
-                notificationHelper.notify(uploadTaskResult.getNotificationId(), notification);
+                notificationHelper.notify(bulkUploadTaskResult.getNotificationId(), notification);
             }
 
             // refreshing filesViewModel

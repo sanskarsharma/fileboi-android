@@ -28,7 +28,7 @@ public class NotificationHelper extends ContextWrapper {
             NotificationChannel notificationChannel = new NotificationChannel(
                     CHANNEL_ONE_ID,
                     CHANNEL_ONE_NAME,
-                    NotificationManager.IMPORTANCE_HIGH
+                    NotificationManager.IMPORTANCE_DEFAULT
             );
             notificationChannel.setDescription("Default notification channel for file upload notifications.");
             notificationChannel.enableLights(true);
