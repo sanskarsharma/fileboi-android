@@ -283,7 +283,6 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
             @Override
             protected Void doInBackground(Void... voids) {
                 Glide.get(getApplicationContext()).clearDiskCache();
-                Glide.get(getApplicationContext()).clearMemory();
 
                 return null;
             }
@@ -304,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements FileItemClickList
 
                             // clear image cache ; fixme : this does not release cache memory
                             clearGlideCache();
+                            Glide.get(getApplicationContext()).clearMemory(); // ref : https://stackoverflow.com/a/36251249/7314323
 
                             // user is now signed out
                             startActivity(new Intent(MainActivity.this, LoginActivity.class));
